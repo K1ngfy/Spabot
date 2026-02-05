@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Spabot Options</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #f5f5f5;
+      color: #333;
+    }
+    h1 {
+      color: #65A637;
+      border-bottom: 2px solid #65A637;
+      padding-bottom: 10px;
+    }
+    /* Tabs */
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #ddd;
+    }
+    .tab-btn {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-size: 16px;
+      color: #666;
+      font-weight: 500;
+    }
+    .tab-btn:hover {
+      color: #65A637;
+    }
+    .tab-btn.active {
+      color: #65A637;
+      border-bottom: 3px solid #65A637;
+    }
+    
+    .container {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: none; /* Hidden by default */
+    }
+    .container.active {
+      display: block;
+    }
+    
+    .template-list {
+      list-style: none;
+      padding: 0;
+    }
+    .template-item {
+      border: 1px solid #ddd;
+      margin-bottom: 10px;
+      padding: 15px;
+      border-radius: 4px;
+      background: #fafafa;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .template-info {
+      flex: 1;
+    }
+    .template-label {
+      font-weight: bold;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .template-code {
+      font-family: monospace;
+      color: #555;
+      background: #eee;
+      padding: 5px;
+      border-radius: 3px;
+      white-space: pre-wrap;
+      max-height: 100px;
+      overflow-y: auto;
+      font-size: 0.9em;
+    }
+    .actions {
+      margin-left: 20px;
+      display: flex;
+      gap: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background 0.2s;
+    }
+    .btn-delete {
+      background: #e53935;
+      color: #fff;
+    }
+    .btn-delete:hover {
+      background: #c62828;
+    }
+    .btn-edit {
+      background: #4a90e2;
+      color: #fff;
+    }
+    .btn-edit:hover {
+      background: #357abd;
+    }
+    .btn-add {
+      background: #65A637;
+      color: #fff;
+      font-weight: bold;
+      margin-bottom: 20px;
+    }
+    .btn-add:hover {
+      background: #4B8C2B;
+    }
+    
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      width: 500px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    textarea {
+      height: 150px;
+      font-family: monospace;
+    }
+    .modal-actions {
+      text-align: right;
+      margin-top: 20px;
+    }
+    .btn-cancel {
+      background: #ccc;
+      color: #333;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Spabot Configuration</h1>
+  
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="templates">Saved Search</button>
+    <button class="tab-btn" data-tab="indexes">Indexes</button>
+    <button class="tab-btn" data-tab="macros">Macros</button>
+    <button class="tab-btn" data-tab="rest">REST API</button>
+    <button class="tab-btn" data-tab="settings">Settings</button>
+  </div>
+  
+  <div id="status" style="margin-bottom:10px; color: #666; font-style: italic; height: 20px;"></div>
+
+  <!-- Templates Container -->
+  <div id="templates" class="container active">
+    <button id="addTplBtn" class="btn-add">+ Add Saved Search</button>
+    <ul id="templateList" class="template-list"></ul>
+  </div>
+
+  <!-- Indexes Container -->
+  <div id="indexes" class="container">
+    <button id="addIdxBtn" class="btn-add">+ Add Index</button>
+    <ul id="indexList" class="template-list"></ul>
+  </div>
+
+  <!-- Macros Container -->
+  <div id="macros" class="container">
+    <button id="addMacBtn" class="btn-add">+ Add Macro</button>
+    <ul id="macroList" class="template-list"></ul>
+  </div>
+
+  <!-- REST Container -->
+  <div id="rest" class="container">
+    <button id="addRestBtn" class="btn-add">+ Add REST Endpoint</button>
+    <ul id="restList" class="template-list"></ul>
+  </div>
+
+  <!-- Settings Container -->
+  <div id="settings" class="container">
+    <div style="padding: 20px;">
+        <h3>General Settings</h3>
+        <div class="form-group">
+            <label for="quietMode" style="display: flex; align-items: center; cursor: pointer;">
+                <input type="checkbox" id="quietMode" style="width: auto; margin-right: 10px;">
+                Enable Quiet Mode (Zen Mode)
+            </label>
+            <p style="color: #666; margin-left: 24px; font-size: 0.9em;">
+                When enabled, Spabot will not show random messages or bubbles.
+            </p>
+        </div>
+        
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+        
+        <h3>Data Management</h3>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <button id="btnExport" class="btn-add" style="background-color: #007acd;">Export Data</button>
+            <button id="btnImport" class="btn-add" style="background-color: #f0ad4e;">Import Data</button>
+            <input type="file" id="fileImport" accept=".json" style="display: none;">
+        </div>
+        <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
+            Backup your custom searches, indexes, macros, and rest endpoints to a JSON file, or restore from one.
+        </p>
+    </div>
+  </div>
+
+  <!-- Generic Edit/Add Modal -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <h2 id="modalTitle">Edit Item</h2>
+      <div class="form-group">
+        <label for="itemName">Name</label>
+        <input type="text" id="itemName" placeholder="Name">
+      </div>
+      <div class="form-group">
+        <label for="itemContent" id="contentLabel">Content</label>
+        <textarea id="itemContent" placeholder="Content..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button id="cancelBtn" class="btn-cancel">Cancel</button>
+        <button id="saveBtn" class="btn-add">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="default_saved_searches.js"></script>
+  <script src="default_indexes.js"></script>
+  <script src="default_macros.js"></script>
+  <script src="default_rest.js"></script>
+  <script src="options.js"></script>
+</body>
+</html>

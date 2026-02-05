@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Spabot",
+  "version": "1.1",
+  "description": "An intelligent Splunk SPL assistant that provides saved searches, quick references for indexes/macros/REST, and a fun interactive bot interface to boost your Splunk productivity.",
+  "permissions": [
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon.png",
+    "48": "icons/icon.png",
+    "128": "icons/icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*/*/app/*/search*",
+        "*://localhost/*/app/*/search*"
+      ],
+      "js": ["default_saved_searches.js", "default_indexes.js", "default_macros.js", "default_rest.js", "quotes_db.js", "menu_controller.js", "content.js"],
+      "css": ["styles.css"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/icon.svg"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
