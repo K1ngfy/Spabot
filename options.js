@@ -8,6 +8,28 @@ const STORAGE_KEYS = {
   settings: 'spabot_settings'
 };
 
+const SKIN_OPTIONS = [
+    { value: 'default', label: 'Default (Kawaii Green)' },
+    { value: 'bilibili', label: 'Bilibili Pink (TV)' },
+    { value: 'bilibili-blue', label: 'Bilibili Blue (TV)' },
+    { value: 'cyberpunk', label: 'Cyberpunk (Neon)' },
+    { value: 'steampunk', label: 'Steampunk (Brass)' },
+    { value: 'ninja', label: 'Dark Mode (Ninja)' },
+    { value: 'retro', label: 'Retro (Gameboy)' },
+    { value: 'mecha', label: 'Mecha (Gundam)' }
+];
+
+const BUBBLE_OPTIONS = [
+    { value: 'default', label: 'Default (Yellow Note)' },
+    { value: 'bilibili', label: 'Bilibili Pink Style' },
+    { value: 'bilibili-blue', label: 'Bilibili Blue Style' },
+    { value: 'comic', label: 'Comic Book' },
+    { value: 'futuristic', label: 'Futuristic HUD' },
+    { value: 'minimal', label: 'Minimalist White' },
+    { value: 'chalkboard', label: 'Chalkboard' },
+    { value: 'neon', label: 'Neon Glow' }
+];
+
 let currentTab = 'templates';
 let currentData = [];
 let editIndex = -1; // -1 for add, >= 0 for edit
@@ -203,19 +225,89 @@ function handleHashParams() {
 
 function loadSettings() {
   chrome.storage.local.get([STORAGE_KEYS.settings], (result) => {
-    const settings = result[STORAGE_KEYS.settings] || { quietMode: false };
+    const settings = result[STORAGE_KEYS.settings] || { quietMode: false, skin: 'default', bubble: 'default' };
     quietModeCheckbox.checked = settings.quietMode;
+    
+    renderAppearanceOptions(settings.skin || 'default', settings.bubble || 'default');
+    updatePreview(settings.skin || 'default', settings.bubble || 'default');
   });
 }
 
 function saveSettings() {
+  // Get selected skin and bubble
+  const selectedSkin = document.querySelector('input[name="skin"]:checked').value;
+  const selectedBubble = document.querySelector('input[name="bubble"]:checked').value;
+
   const settings = {
-    quietMode: quietModeCheckbox.checked
+    quietMode: quietModeCheckbox.checked,
+    skin: selectedSkin,
+    bubble: selectedBubble
   };
   chrome.storage.local.set({ [STORAGE_KEYS.settings]: settings }, () => {
     showStatus('Settings saved.');
     setTimeout(() => { showStatus(''); }, 2000);
   });
+}
+
+function renderAppearanceOptions(currentSkin, currentBubble) {
+    const skinContainer = document.getElementById('skinSelector');
+    const bubbleContainer = document.getElementById('bubbleSelector');
+    
+    if (!skinContainer || !bubbleContainer) return;
+    
+    // Render Skins
+    skinContainer.innerHTML = SKIN_OPTIONS.map(opt => `
+        <label style="cursor: pointer; display: flex; align-items: center;">
+            <input type="radio" name="skin" value="${opt.value}" ${opt.value === currentSkin ? 'checked' : ''} style="margin-right: 8px;">
+            ${opt.label}
+        </label>
+    `).join('');
+    
+    // Render Bubbles
+    bubbleContainer.innerHTML = BUBBLE_OPTIONS.map(opt => `
+        <label style="cursor: pointer; display: flex; align-items: center;">
+            <input type="radio" name="bubble" value="${opt.value}" ${opt.value === currentBubble ? 'checked' : ''} style="margin-right: 8px;">
+            ${opt.label}
+        </label>
+    `).join('');
+    
+    // Bind change events for preview
+    document.querySelectorAll('input[name="skin"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const bubble = document.querySelector('input[name="bubble"]:checked').value;
+            updatePreview(e.target.value, bubble);
+            saveSettings(); // Auto-save on change? User requested "configure", auto-save is nice.
+        });
+    });
+    
+    document.querySelectorAll('input[name="bubble"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const skin = document.querySelector('input[name="skin"]:checked').value;
+            updatePreview(skin, e.target.value);
+            saveSettings();
+        });
+    });
+}
+
+function updatePreview(skin, bubble) {
+    const wrapper = document.getElementById('previewWrapper');
+    const bubbleEl = document.getElementById('previewBubble');
+    
+    if (!wrapper || !bubbleEl) return;
+    
+    // Reset classes
+    wrapper.className = 'spabot-wrapper';
+    bubbleEl.className = 'spabot-speech-bubble visible';
+    
+    // Apply Skin
+    if (skin !== 'default') {
+        wrapper.classList.add(`spabot-skin-${skin}`);
+    }
+    
+    // Apply Bubble
+    if (bubble !== 'default') {
+        bubbleEl.classList.add(`spabot-bubble-${bubble}`);
+    }
 }
 
 function loadData() {

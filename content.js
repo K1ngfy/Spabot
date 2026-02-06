@@ -16,11 +16,51 @@ const SEARCH_BAR_SELECTORS = [
 let observer = null;
 let isBotInjected = false;
 let currentInputEl = null;
+let currentSkin = 'default';
+let currentBubble = 'default';
 
 function init() {
   log('Initializing...');
+  loadSettings();
   attemptInjection();
   startObserver();
+}
+
+function loadSettings() {
+  if (chrome.storage) {
+    chrome.storage.local.get(['spabot_settings'], (result) => {
+      const settings = result.spabot_settings || {};
+      isQuietMode = !!settings.quietMode;
+      currentSkin = settings.skin || 'default';
+      currentBubble = settings.bubble || 'default';
+      updateAppearance();
+    });
+  }
+}
+
+function updateAppearance() {
+    const wrapper = document.querySelector('.spabot-wrapper');
+    const bubble = document.querySelector('.spabot-speech-bubble');
+    
+    if (wrapper) {
+        // Reset and apply skin
+        wrapper.className = 'spabot-wrapper';
+        if (currentSkin !== 'default') {
+            wrapper.classList.add(`spabot-skin-${currentSkin}`);
+        }
+    }
+    
+    if (bubble) {
+        // Reset and apply bubble
+        // Preserve 'visible' class if present
+        const isVisible = bubble.classList.contains('visible');
+        bubble.className = 'spabot-speech-bubble';
+        if (isVisible) bubble.classList.add('visible');
+        
+        if (currentBubble !== 'default') {
+            bubble.classList.add(`spabot-bubble-${currentBubble}`);
+        }
+    }
 }
 
 function attemptInjection() {
@@ -104,6 +144,9 @@ function injectBot(container) {
   // Create Wrapper
   const wrapper = document.createElement('div');
   wrapper.className = 'spabot-wrapper';
+  if (currentSkin !== 'default') {
+      wrapper.classList.add(`spabot-skin-${currentSkin}`);
+  }
   wrapper.title = 'Spabot - Click for options';
 
   // Create Icon Structure (Simplified for Kawaii Splunk Green design)
@@ -169,6 +212,9 @@ function injectBot(container) {
   // Create Speech Bubble (Hidden by default)
   const speechBubble = document.createElement('div');
   speechBubble.className = 'spabot-speech-bubble';
+  if (currentBubble !== 'default') {
+      speechBubble.classList.add(`spabot-bubble-${currentBubble}`);
+  }
   
   // Inner text container for safe overflow handling
   const speechBubbleText = document.createElement('div');
@@ -190,15 +236,16 @@ function injectBot(container) {
 
   // Load Quiet Mode setting
   if (chrome.storage) {
-    chrome.storage.local.get(['spabot_settings'], (result) => {
-      const settings = result.spabot_settings || {};
-      isQuietMode = !!settings.quietMode;
-    });
-    
+    // Initial load moved to init()
+
     // Listen for changes
     chrome.storage.onChanged.addListener((changes, namespace) => {
       if (namespace === 'local' && changes.spabot_settings) {
-        isQuietMode = !!changes.spabot_settings.newValue.quietMode;
+        const newSettings = changes.spabot_settings.newValue || {};
+        isQuietMode = !!newSettings.quietMode;
+        currentSkin = newSettings.skin || 'default';
+        currentBubble = newSettings.bubble || 'default';
+        updateAppearance();
       }
     });
   }

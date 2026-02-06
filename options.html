@@ -167,6 +167,7 @@
       margin-right: 10px;
     }
   </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -220,6 +221,48 @@
             </p>
         </div>
         
+        <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+        <h3>Appearance</h3>
+        <div style="display: flex; gap: 40px; margin-bottom: 20px;">
+            <div style="flex: 1;">
+                <h4 style="margin-top:0;">Bot Skin</h4>
+                <div id="skinSelector" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Populated by JS -->
+                </div>
+
+                <h4 style="margin-top:20px;">Bubble Style</h4>
+                <div id="bubbleSelector" style="display: flex; flex-direction: column; gap: 8px;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <div style="flex: 1; min-width: 300px;">
+                <h4 style="margin-top:0;">Live Preview</h4>
+                <div style="background: #f0f0f0; border: 1px solid #ddd; border-radius: 8px; height: 250px; position: relative; display: flex; justify-content: center; align-items: center; overflow: hidden;">
+                    <!-- Background Grid/Pattern for better contrast -->
+                    <div style="position: absolute; top:0; left:0; width:100%; height:100%; opacity: 0.1; background-image: radial-gradient(#000 1px, transparent 1px); background-size: 20px 20px;"></div>
+                    
+                    <!-- Preview Bot Wrapper -->
+                    <div id="previewWrapper" class="spabot-wrapper" style="position: relative; right: auto; top: auto;">
+                        <div class="spabot-icon">
+                            <div class="spabot-head">
+                                <div class="spabot-face-screen">
+                                    <div class="spabot-eye left"></div>
+                                    <div class="spabot-eye right"></div>
+                                    <div class="spabot-mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="previewBubble" class="spabot-speech-bubble visible" style="position: absolute; bottom: 35px; right: 20px; opacity: 1; transform: none; width: 160px;">
+                            <div class="spabot-speech-bubble-text">Hello! I'm Spabot.</div>
+                        </div>
+                    </div>
+                </div>
+                <p style="text-align: center; color: #666; font-size: 0.85em; margin-top: 8px;">(Preview of your selected style)</p>
+            </div>
+        </div>
+
         <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
         
         <h3>Data Management</h3>

@@ -695,3 +695,249 @@
   color: #666;
   margin-top: 2px;
 }
+
+/* --- Spabot Themes (Skins) --- */
+
+/* 1. Cyberpunk */
+.spabot-skin-cyberpunk .spabot-head {
+  background: #2b213a;
+  box-shadow: 0 0 10px rgba(255, 0, 85, 0.5), inset 0 0 5px rgba(0, 243, 255, 0.3);
+  border: 1px solid #ff0055;
+}
+.spabot-skin-cyberpunk .spabot-face-screen {
+  background: #050510;
+  box-shadow: inset 0 0 5px rgba(0, 243, 255, 0.2);
+}
+.spabot-skin-cyberpunk .spabot-eye {
+  background: #00f3ff;
+  box-shadow: 0 0 6px #00f3ff;
+}
+.spabot-skin-cyberpunk .spabot-mouth {
+  border-bottom-color: #00f3ff;
+}
+.spabot-skin-cyberpunk:hover .spabot-head {
+  box-shadow: 0 0 15px rgba(255, 0, 85, 0.8);
+}
+
+/* 2. Steampunk */
+.spabot-skin-steampunk .spabot-head {
+  background: linear-gradient(135deg, #b87333 0%, #8b4513 100%);
+  border: 1px solid #5d4037;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+.spabot-skin-steampunk .spabot-face-screen {
+  background: #2f2520;
+  border: 1px solid #b87333;
+}
+.spabot-skin-steampunk .spabot-eye {
+  background: #ffd700;
+  box-shadow: 0 0 2px #ffd700;
+}
+.spabot-skin-steampunk .spabot-mouth {
+  border-bottom-color: #ffd700;
+}
+
+/* 3. Dark Mode (Ninja) */
+.spabot-skin-ninja .spabot-head {
+  background: #212121;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+.spabot-skin-ninja .spabot-face-screen {
+  background: #000;
+  border: 1px solid #333;
+}
+.spabot-skin-ninja .spabot-eye {
+  background: #fff;
+  box-shadow: none;
+}
+.spabot-skin-ninja .spabot-mouth {
+  border-bottom-color: #fff;
+}
+
+/* 4. Retro (Gameboy) */
+.spabot-skin-retro .spabot-head {
+  background: #8bac0f;
+  border: 2px solid #0f380f;
+  border-radius: 4px; /* Boxy */
+  box-shadow: 2px 2px 0 #0f380f;
+}
+.spabot-skin-retro .spabot-face-screen {
+  background: #0f380f;
+  border-radius: 2px;
+}
+.spabot-skin-retro .spabot-eye {
+  background: #9bbc0f;
+  border-radius: 0; /* Square eyes */
+  box-shadow: none;
+}
+.spabot-skin-retro .spabot-mouth {
+  border-bottom-color: #9bbc0f;
+  border-radius: 0;
+}
+
+/* 5. Mecha (Gundam) */
+.spabot-skin-mecha .spabot-head {
+  background: #fff;
+  border-top: 2px solid #e53935; /* Red accent */
+  border-bottom: 2px solid #1e88e5; /* Blue accent */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.spabot-skin-mecha .spabot-face-screen {
+  background: #1a237e;
+  border: 1px solid #3949ab;
+}
+.spabot-skin-mecha .spabot-eye {
+  background: #00e676; /* Green eyes */
+  box-shadow: 0 0 4px #00e676;
+}
+.spabot-skin-mecha .spabot-mouth {
+  border-bottom-color: #ffd600; /* Yellow mouth */
+}
+
+/* 6. Bilibili Pink */
+.spabot-skin-bilibili .spabot-head {
+  background: #fb7299;
+  box-shadow: 0 2px 5px rgba(251, 114, 153, 0.4);
+  border-radius: 11px;
+}
+.spabot-skin-bilibili .spabot-face-screen {
+  background: #ffffff;
+  border: 1px solid #fce4ec;
+}
+.spabot-skin-bilibili .spabot-eye {
+  background: #333;
+  box-shadow: none;
+  width: 4px;
+  height: 4px;
+  top: 4px;
+}
+.spabot-skin-bilibili .spabot-mouth {
+  border-bottom: 2px solid #333;
+  width: 6px;
+  height: 3px;
+  bottom: 3px;
+}
+
+/* 7. Bilibili Blue */
+.spabot-skin-bilibili-blue .spabot-head {
+  background: #23ade5;
+  box-shadow: 0 2px 5px rgba(35, 173, 229, 0.4);
+  border-radius: 11px;
+}
+.spabot-skin-bilibili-blue .spabot-face-screen {
+  background: #ffffff;
+  border: 1px solid #e3f2fd;
+}
+.spabot-skin-bilibili-blue .spabot-eye {
+  background: #333;
+  box-shadow: none;
+  width: 4px;
+  height: 4px;
+  top: 4px;
+}
+.spabot-skin-bilibili-blue .spabot-mouth {
+  border-bottom: 2px solid #333;
+  width: 6px;
+  height: 3px;
+  bottom: 3px;
+}
+
+/* --- Bubble Themes --- */
+
+/* 1. Comic */
+.spabot-bubble-comic {
+  background: #fff;
+  border: 2px solid #000;
+  box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+  color: #000;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+  border-radius: 12px;
+}
+.spabot-bubble-comic::after, .spabot-bubble-comic::before {
+  background: #fff;
+  border: 2px solid #000;
+  box-shadow: 2px 2px 0 rgba(0,0,0,0.2);
+}
+
+/* 2. Futuristic */
+.spabot-bubble-futuristic {
+  background: rgba(0, 20, 40, 0.9);
+  border: 1px solid #00f3ff;
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+  color: #00f3ff;
+  font-family: 'Courier New', monospace;
+  border-radius: 4px;
+}
+.spabot-bubble-futuristic::after, .spabot-bubble-futuristic::before {
+  background: #00f3ff;
+  box-shadow: 0 0 5px #00f3ff;
+}
+
+/* 3. Minimal */
+.spabot-bubble-minimal {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  color: #333;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  border-radius: 6px;
+}
+.spabot-bubble-minimal::after, .spabot-bubble-minimal::before {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  box-shadow: none;
+}
+
+/* 4. Chalkboard */
+.spabot-bubble-chalkboard {
+  background: #333;
+  border: 2px dashed #666;
+  color: #eee;
+  font-family: 'Chalkboard SE', sans-serif;
+  box-shadow: none;
+  border-radius: 4px;
+}
+.spabot-bubble-chalkboard::after, .spabot-bubble-chalkboard::before {
+  background: #333;
+  border: 1px dashed #666;
+}
+
+/* 5. Neon */
+.spabot-bubble-neon {
+  background: #111;
+  border: 1px solid #ff00ff;
+  box-shadow: 0 0 5px #ff00ff, inset 0 0 5px rgba(255, 0, 255, 0.2);
+  color: #ff00ff;
+  font-family: monospace;
+  border-radius: 8px;
+  text-shadow: 0 0 2px #ff00ff;
+}
+/* 6. Bilibili TV */
+.spabot-bubble-bilibili {
+  background: #fff;
+  border: 2px solid #fb7299;
+  border-radius: 12px;
+  color: #fb7299;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 4px 12px rgba(251, 114, 153, 0.2);
+}
+.spabot-bubble-bilibili::after, .spabot-bubble-bilibili::before {
+  background: #fff;
+  border: 2px solid #fb7299;
+  box-shadow: none;
+}
+
+/* 7. Bilibili Blue TV */
+.spabot-bubble-bilibili-blue {
+  background: #fff;
+  border: 2px solid #23ade5;
+  border-radius: 12px;
+  color: #23ade5;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  box-shadow: 0 4px 12px rgba(35, 173, 229, 0.2);
+}
+.spabot-bubble-bilibili-blue::after, .spabot-bubble-bilibili-blue::before {
+  background: #fff;
+  border: 2px solid #23ade5;
+  box-shadow: none;
+}
