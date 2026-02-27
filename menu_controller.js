@@ -977,7 +977,7 @@
       
       this.menuElement.style.display = 'block';
       const top = anchorRect.top + anchorRect.height + 10 + window.scrollY;
-      const left = anchorRect.left - 180 + window.scrollX;
+      const left = anchorRect.left + window.scrollX;
       this.menuElement.style.top = `${top}px`;
       this.menuElement.style.left = `${left}px`;
       this.showMessage(''); 

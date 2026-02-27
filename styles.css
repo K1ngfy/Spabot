@@ -2,7 +2,7 @@
 .spabot-wrapper {
   position: absolute;
   right: 10px;
-  top: 8px; /* Approximate vertical center, can be adjusted */
+  top: 11px; /* Approximate vertical center, can be adjusted */
   z-index: 9999;
   display: flex;
   align-items: center;
@@ -556,8 +556,8 @@
 .spabot-submenu {
   position: absolute;
   top: -4px; /* Align slightly higher */
-  left: 100%;
-  width: 240px;
+  right: 100%; /* Show on the left side */
+  width: 300px;
   background: #ffffff;
   border: 1px solid #e1e6eb;
   border-radius: 6px;
@@ -566,9 +566,9 @@
   margin: 0;
   list-style: none;
   z-index: 10002;
-  margin-left: 4px; /* Slight gap */
+  margin-right: 2px; /* Slight gap on the right */
   opacity: 0;
-  transform: translateX(-5px);
+  transform: translateX(5px);
   animation: spabotSubmenuFadeIn 0.2s forwards ease-out;
 }
 
