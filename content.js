@@ -5,13 +5,30 @@ function log(...args) {
   console.log(LOG_PREFIX, ...args);
 }
 
-// Selectors to identify Splunk Search Bar
-const SEARCH_BAR_SELECTORS = [
-  '.ace_editor',                // Common Splunk ACE Editor
-  '.splunk-search-bar-input',   // Generic container
-  '.search-query-control',      // Older versions
-  'textarea[name="q"]'          // Fallback
-];
+// Platform detection: 'elk' (Kibana Discover) | 'splunk' | null
+function detectPlatform() {
+  const path = location.pathname;
+  if (path.includes('/app/discover')) return 'elk';
+  if (path.includes('/search')) return 'splunk';
+  return null;
+}
+const PLATFORM = detectPlatform();
+window.SPABOT_PLATFORM = PLATFORM;
+
+// Search bar selectors per platform
+const PLATFORM_SELECTORS = {
+  splunk: [
+    '.ace_editor',                // Common Splunk ACE Editor
+    '.splunk-search-bar-input',   // Generic container
+    '.search-query-control',      // Older versions
+    'textarea[name="q"]'          // Fallback
+  ],
+  elk: [
+    'textarea[data-test-subj="queryInput"]',       // Official Kibana test locator (7.x/8.x)
+    '.kbnQueryBar textarea',                       // Query bar container fallback
+    'div[data-test-subj="kbnQueryBar"] textarea'   // Container test-subj fallback
+  ]
+};
 
 let observer = null;
 let isBotInjected = false;
@@ -75,7 +92,8 @@ function attemptInjection() {
 }
 
 function findSearchContainer() {
-  for (const selector of SEARCH_BAR_SELECTORS) {
+  const selectors = PLATFORM_SELECTORS[PLATFORM] || PLATFORM_SELECTORS.splunk;
+  for (const selector of selectors) {
     const el = document.querySelector(selector);
     if (el) {
       // If it's the ACE editor itself, we want its parent wrapper usually
@@ -340,7 +358,12 @@ function injectBot(container) {
   // Initial Greeting
   setTimeout(() => {
     if (!isQuietMode) {
-       const greetings = [
+       const greetings = PLATFORM === 'elk' ? [
+           "Spabot online! Ready to explore your logs.",
+           "Hi there! Let's write some ES|QL.",
+           "System check complete. All systems go!",
+           "Ready to dig into those logs?"
+       ] : [
            "Spabot online! Ready to search.",
            "Hi there! Let's write some SPL.",
            "System check complete. All systems go!",

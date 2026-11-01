@@ -2,9 +2,12 @@
 
 const STORAGE_KEYS = {
   templates: 'spabot_custom_templates',
+  templatesElk: 'spabot_custom_templates_elk',
   indexes: 'spabot_custom_indexes',
   macros: 'spabot_custom_macros',
   rest: 'spabot_custom_rest',
+  esql: 'spabot_custom_esql',
+  dataviews: 'spabot_custom_dataviews',
   settings: 'spabot_settings'
 };
 
@@ -34,20 +37,37 @@ let currentTab = 'templates';
 let currentData = [];
 let editIndex = -1; // -1 for add, >= 0 for edit
 
+// Tabs that hold saved-search templates (support group field)
+const isTemplateTab = (tab) => tab === 'templates' || tab === 'templatesElk';
+
+// Platform grouping: which platform a config tab belongs to
+const TAB_PLATFORM = {
+  templates: 'splunk', indexes: 'splunk', macros: 'splunk', rest: 'splunk',
+  templatesElk: 'kibana', esql: 'kibana', dataviews: 'kibana'
+};
+let currentPlatform = 'splunk';
+let listFilter = { search: '', group: '__all' };
+
 // DOM Elements
 const tabs = document.querySelectorAll('.tab-btn');
 const containers = document.querySelectorAll('.container');
 const lists = {
   templates: document.getElementById('templateList'),
+  templatesElk: document.getElementById('templateListElk'),
   indexes: document.getElementById('indexList'),
   macros: document.getElementById('macroList'),
-  rest: document.getElementById('restList')
+  rest: document.getElementById('restList'),
+  esql: document.getElementById('esqlList'),
+  dataviews: document.getElementById('dataviewList')
 };
 const addBtns = {
   templates: document.getElementById('addTplBtn'),
+  templatesElk: document.getElementById('addTplElkBtn'),
   indexes: document.getElementById('addIdxBtn'),
   macros: document.getElementById('addMacBtn'),
-  rest: document.getElementById('addRestBtn')
+  rest: document.getElementById('addRestBtn'),
+  esql: document.getElementById('addEsqlBtn'),
+  dataviews: document.getElementById('addDvBtn')
 };
 
 const modal = document.getElementById('modal');
@@ -80,11 +100,36 @@ function setupTabs() {
       document.getElementById(tabName).classList.add('active');
       
       currentTab = tabName;
+      // Keep platform nav in sync (e.g. when opened via hash link)
+      if (TAB_PLATFORM[tabName]) setPlatformUI(TAB_PLATFORM[tabName]);
+      // Show toolbar for data lists, reset previous filter state
+      const toolbar = document.getElementById('listToolbar');
+      if (toolbar) toolbar.classList.remove('hidden');
+      resetListFilter();
       if (currentTab !== 'settings') {
         loadData();
       }
     });
   });
+
+  // Platform switcher (Splunk / Kibana / General Settings)
+  document.querySelectorAll('.platform-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const p = btn.dataset.platform;
+      if (p === 'settings') {
+        showSettings();
+        return;
+      }
+      // Activate the first sub-tab of that platform; the tab click
+      // handler takes care of platform UI, container and data loading.
+      const row = document.getElementById(p === 'kibana' ? 'tabsKibana' : 'tabsSplunk');
+      const first = row.querySelector('.tab-btn');
+      if (first) first.click();
+    });
+  });
+
+  // List toolbar (search + group filter)
+  setupListToolbar();
 
   // Settings listener
   quietModeCheckbox.addEventListener('change', saveSettings);
@@ -102,16 +147,112 @@ function setupTabs() {
   handleHashParams();
 }
 
+function setPlatformUI(platform) {
+  currentPlatform = platform;
+  document.querySelectorAll('.platform-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.platform === platform));
+  document.getElementById('tabsSplunk').classList.toggle('hidden', platform !== 'splunk');
+  document.getElementById('tabsKibana').classList.toggle('hidden', platform !== 'kibana');
+}
+
+function showSettings() {
+  currentPlatform = 'settings';
+  currentTab = 'settings';
+  document.querySelectorAll('.platform-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.platform === 'settings'));
+  document.getElementById('tabsSplunk').classList.add('hidden');
+  document.getElementById('tabsKibana').classList.add('hidden');
+  const toolbar = document.getElementById('listToolbar');
+  if (toolbar) toolbar.classList.add('hidden');
+  tabs.forEach(b => b.classList.remove('active'));
+  containers.forEach(c => c.classList.remove('active'));
+  document.getElementById('settings').classList.add('active');
+}
+
+// --- List Toolbar (search + group filter) ---
+function resetListFilter() {
+  listFilter = { search: '', group: '__all' };
+  const searchInput = document.getElementById('listSearch');
+  if (searchInput) searchInput.value = '';
+}
+
+function setupListToolbar() {
+  const toolbar = document.getElementById('listToolbar');
+  if (!toolbar) return;
+  document.getElementById('listSearch').addEventListener('input', (e) => {
+    listFilter.search = e.target.value.trim().toLowerCase();
+    applyListFilter();
+  });
+  document.getElementById('listGroupFilters').addEventListener('click', (e) => {
+    const chip = e.target.closest('.group-chip');
+    if (!chip) return;
+    listFilter.group = chip.dataset.group;
+    document.querySelectorAll('#listGroupFilters .group-chip').forEach(c =>
+      c.classList.toggle('active', c === chip));
+    applyListFilter();
+  });
+}
+
+function refreshGroupChips() {
+  const wrap = document.getElementById('listGroupFilters');
+  if (!wrap) return;
+  const groups = [];
+  if (isTemplateTab(currentTab)) {
+    currentData.forEach(item => {
+      if (item.group && !groups.includes(item.group)) groups.push(item.group);
+    });
+  }
+  groups.sort();
+  if (listFilter.group !== '__all' && !groups.includes(listFilter.group)) {
+    listFilter.group = '__all';
+  }
+  const chips = ['__all', ...groups];
+  wrap.innerHTML = chips.map(g =>
+    `<button class="group-chip${g === listFilter.group ? ' active' : ''}" data-group="${escapeHtml(g)}">${g === '__all' ? 'All' : escapeHtml(g)}</button>`
+  ).join('');
+}
+
+function applyListFilter() {
+  const listEl = lists[currentTab];
+  if (!listEl) return;
+  const items = Array.from(listEl.querySelectorAll('.template-item'));
+  let visible = 0;
+  items.forEach(li => {
+    const okGroup = listFilter.group === '__all' || li.dataset.group === listFilter.group;
+    const okSearch = !listFilter.search || li.textContent.toLowerCase().includes(listFilter.search);
+    const show = okGroup && okSearch;
+    li.style.display = show ? '' : 'none';
+    if (show) visible++;
+  });
+  // Show a hint when everything is filtered out
+  let noMatch = listEl.querySelector('.no-match-item');
+  if (items.length > 0 && visible === 0) {
+    if (!noMatch) {
+      noMatch = document.createElement('li');
+      noMatch.className = 'no-match-item';
+      noMatch.style.cssText = 'padding:20px;text-align:center;color:#888;';
+      noMatch.textContent = 'No matches found.';
+      listEl.appendChild(noMatch);
+    }
+    noMatch.style.display = '';
+  } else if (noMatch) {
+    noMatch.style.display = 'none';
+  }
+}
+
 function handleExport() {
     chrome.storage.local.get(null, (items) => {
         const exportData = {
-            version: '1.0',
+            version: '1.1',
             timestamp: new Date().toISOString(),
             data: {
                 templates: items[STORAGE_KEYS.templates] || [],
+                templatesElk: items[STORAGE_KEYS.templatesElk] || [],
                 indexes: items[STORAGE_KEYS.indexes] || [],
                 macros: items[STORAGE_KEYS.macros] || [],
-                rest: items[STORAGE_KEYS.rest] || []
+                rest: items[STORAGE_KEYS.rest] || [],
+                esql: items[STORAGE_KEYS.esql] || [],
+                dataviews: items[STORAGE_KEYS.dataviews] || []
             }
         };
         
@@ -157,9 +298,12 @@ function handleImport(event) {
                 };
                 
                 newItems[STORAGE_KEYS.templates] = mergeList(currentItems[STORAGE_KEYS.templates], json.data.templates);
+                newItems[STORAGE_KEYS.templatesElk] = mergeList(currentItems[STORAGE_KEYS.templatesElk], json.data.templatesElk);
                 newItems[STORAGE_KEYS.indexes] = mergeList(currentItems[STORAGE_KEYS.indexes], json.data.indexes);
                 newItems[STORAGE_KEYS.macros] = mergeList(currentItems[STORAGE_KEYS.macros], json.data.macros);
                 newItems[STORAGE_KEYS.rest] = mergeList(currentItems[STORAGE_KEYS.rest], json.data.rest);
+                newItems[STORAGE_KEYS.esql] = mergeList(currentItems[STORAGE_KEYS.esql], json.data.esql);
+                newItems[STORAGE_KEYS.dataviews] = mergeList(currentItems[STORAGE_KEYS.dataviews], json.data.dataviews);
                 
                 chrome.storage.local.set(newItems, () => {
                     showStatus('Data imported and merged successfully!');
@@ -186,7 +330,7 @@ function handleHashParams() {
     const params = new URLSearchParams(hash);
     
     const tab = params.get('tab');
-    if (tab && ['templates', 'indexes', 'macros', 'rest'].includes(tab)) {
+    if (tab && ['templates', 'templatesElk', 'indexes', 'macros', 'rest', 'esql', 'dataviews'].includes(tab)) {
         // Switch tab
         const tabBtn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
         if (tabBtn) tabBtn.click();
@@ -204,17 +348,17 @@ function handleHashParams() {
         
         setTimeout(() => {
             openModal(-1);
-            
+
             // Override values
             if (name) itemName.value = name;
-            
-            if (currentTab === 'templates') {
+
+            if (isTemplateTab(currentTab)) {
                 if (value) itemContent.value = value;
                 const itemGroup = document.getElementById('itemGroup');
                 if (itemGroup && group) itemGroup.value = group;
             } else {
-                // Indexes, Macros, Rest use 'desc' field mapping to itemContent
-                if (value) itemContent.value = value; 
+                // Indexes, Macros, Rest, ES|QL, Dataviews use 'desc' field mapping to itemContent
+                if (value) itemContent.value = value;
             }
             
             // Clean hash to avoid reopening on refresh
@@ -325,12 +469,18 @@ function loadData() {
       let defaults = [];
       if (currentTab === 'templates' && window.SPABOT_DEFAULT_SAVED_SEARCHES) {
         defaults = window.SPABOT_DEFAULT_SAVED_SEARCHES;
+      } else if (currentTab === 'templatesElk' && window.SPABOT_DEFAULT_ELK_SAVED_SEARCHES) {
+        defaults = window.SPABOT_DEFAULT_ELK_SAVED_SEARCHES;
       } else if (currentTab === 'indexes' && window.SPABOT_DEFAULT_INDEXES) {
         defaults = window.SPABOT_DEFAULT_INDEXES;
       } else if (currentTab === 'macros' && window.SPABOT_DEFAULT_MACROS) {
         defaults = window.SPABOT_DEFAULT_MACROS;
       } else if (currentTab === 'rest' && window.SPABOT_DEFAULT_REST) {
         defaults = window.SPABOT_DEFAULT_REST;
+      } else if (currentTab === 'esql' && window.SPABOT_DEFAULT_ESQL_REFERENCE) {
+        defaults = window.SPABOT_DEFAULT_ESQL_REFERENCE;
+      } else if (currentTab === 'dataviews' && window.SPABOT_DEFAULT_ELK_DATAVIEWS) {
+        defaults = window.SPABOT_DEFAULT_ELK_DATAVIEWS;
       }
       
       // Save defaults to storage then render
@@ -371,9 +521,10 @@ function renderList() {
   currentData.forEach((item, index) => {
     const li = document.createElement('li');
     li.className = 'template-item';
+    li.dataset.group = (isTemplateTab(currentTab) && item.group) ? item.group : '';
     
     let title = '', content = '', groupHtml = '';
-    if (currentTab === 'templates') {
+    if (isTemplateTab(currentTab)) {
       title = item.name || item.label;
       content = item.value || item.code;
       if (item.group) {
@@ -406,6 +557,10 @@ function renderList() {
   listEl.querySelectorAll('.btn-delete').forEach(btn => {
     btn.addEventListener('click', (e) => deleteItem(parseInt(e.target.dataset.index)));
   });
+
+  // Apply toolbar state (rebuild group chips for the fresh data)
+  refreshGroupChips();
+  applyListFilter();
 }
 
 function deleteItem(index) {
@@ -420,8 +575,11 @@ function openModal(index) {
   modal.style.display = 'flex';
   
   // Adjust labels based on tab
-  if (currentTab === 'templates') {
-    modalTitle.innerText = index === -1 ? 'Add Saved Search' : 'Edit Saved Search';
+  if (isTemplateTab(currentTab)) {
+    const isElk = currentTab === 'templatesElk';
+    modalTitle.innerText = index === -1
+      ? (isElk ? 'Add ELK Search' : 'Add Saved Search')
+      : (isElk ? 'Edit ELK Search' : 'Edit Saved Search');
     
     // Inject custom form for Saved Search (with Group)
     // Check if group input exists, if not create it
@@ -459,9 +617,9 @@ function openModal(index) {
         if (datalist) datalist.innerHTML = datalistOptions;
     }
     
-    contentLabel.innerText = 'SPL Query';
-    itemContent.placeholder = 'index=_internal ...';
-    
+    contentLabel.innerText = isElk ? 'ES|QL Query' : 'SPL Query';
+    itemContent.placeholder = isElk ? 'FROM logs-* | WHERE ...' : 'index=_internal ...';
+
   } else {
     // For other tabs, hide the group field if it exists
     const groupGroup = document.getElementById('groupGroup');
@@ -477,6 +635,14 @@ function openModal(index) {
         modalTitle.innerText = index === -1 ? 'Add Macro' : 'Edit Macro';
         contentLabel.innerText = 'Description';
         itemContent.placeholder = 'Description for this macro...';
+    } else if (currentTab === 'esql') {
+        modalTitle.innerText = index === -1 ? 'Add ES|QL Syntax' : 'Edit ES|QL Syntax';
+        contentLabel.innerText = 'Syntax / Example';
+        itemContent.placeholder = '| WHERE error.message IS NOT NULL';
+    } else if (currentTab === 'dataviews') {
+        modalTitle.innerText = index === -1 ? 'Add Data View' : 'Edit Data View';
+        contentLabel.innerText = 'Description';
+        itemContent.placeholder = 'Description for this data view...';
     } else {
         modalTitle.innerText = index === -1 ? 'Add REST Endpoint' : 'Edit REST Endpoint';
         contentLabel.innerText = 'Description';
@@ -491,7 +657,7 @@ function openModal(index) {
     if (itemGroup) itemGroup.value = '';
   } else {
     const item = currentData[index];
-    if (currentTab === 'templates') {
+    if (isTemplateTab(currentTab)) {
       itemName.value = item.label || item.name; // Compat
       itemContent.value = item.code || item.value; // Compat
       const itemGroup = document.getElementById('itemGroup');
@@ -520,13 +686,13 @@ function handleSave() {
     return;
   }
   
-  if (!contentVal && currentTab === 'templates') {
+  if (!contentVal && isTemplateTab(currentTab)) {
     alert('Please enter content.');
     return;
   }
-  
+
   let newItem;
-  if (currentTab === 'templates') {
+  if (isTemplateTab(currentTab)) {
     // Schema: { name, value, group, desc? }
     newItem = { 
         name: nameVal, 

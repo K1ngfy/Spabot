@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Spabot",
   "version": "1.1",
-  "description": "An intelligent Splunk SPL assistant that provides saved searches, quick references for indexes/macros/REST, and a fun interactive bot interface to boost your Splunk productivity.",
+  "description": "An intelligent search assistant for Splunk SPL and ELK Kibana ES|QL that provides saved searches, quick references (indexes/macros/REST for Splunk, ES|QL syntax and Data Views for ELK), and a fun interactive bot interface to boost your productivity.",
   "permissions": [
     "storage"
   ],
@@ -23,9 +23,11 @@
     {
       "matches": [
         "*://*/*/app/*/search*",
-        "*://localhost/*/app/*/search*"
+        "*://localhost/*/app/*/search*",
+        "*://*/*/app/discover*",
+        "*://localhost/*/app/discover*"
       ],
-      "js": ["default_saved_searches.js", "default_indexes.js", "default_macros.js", "default_rest.js", "quotes_db.js", "menu_controller.js", "content.js"],
+      "js": ["default_saved_searches.js", "default_indexes.js", "default_macros.js", "default_rest.js", "default_elk_saved_searches.js", "default_elk_reference.js", "quotes_db.js", "menu_controller.js", "content.js"],
       "css": ["styles.css"]
     }
   ],

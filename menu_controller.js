@@ -1,7 +1,12 @@
 // menu_controller.js - UI and Logic for the Spabot Menu
 
 (function(global) {
-  
+
+  // --- Platform Detection ---
+  // This script loads before content.js, so detect from URL directly.
+  const IS_ELK = location.pathname.includes('/app/discover');
+  const PLATFORM = IS_ELK ? 'elk' : 'splunk';
+
   // --- Logic Helpers ---
 
   function generateUUID() {
@@ -22,9 +27,12 @@
     // We now have multiple keys
     keys: {
       templates: 'spabot_custom_templates',
+      templatesElk: 'spabot_custom_templates_elk',
       indexes: 'spabot_custom_indexes',
       macros: 'spabot_custom_macros',
-      rest: 'spabot_custom_rest'
+      rest: 'spabot_custom_rest',
+      esql: 'spabot_custom_esql',
+      dataviews: 'spabot_custom_dataviews'
     },
     
     // Generic load
@@ -109,6 +117,9 @@
     saveTemplate: function(template, callback) {
         this.saveItem(this.keys.templates, template, callback);
     },
+    saveTemplateElk: function(template, callback) {
+        this.saveItem(this.keys.templatesElk, template, callback);
+    },
     saveIndex: function(item, callback) {
         this.saveItem(this.keys.indexes, item, callback);
     },
@@ -117,6 +128,12 @@
     },
     saveRest: function(item, callback) {
         this.saveItem(this.keys.rest, item, callback);
+    },
+    saveEsql: function(item, callback) {
+        this.saveItem(this.keys.esql, item, callback);
+    },
+    saveDataview: function(item, callback) {
+        this.saveItem(this.keys.dataviews, item, callback);
     }
   };
 
@@ -136,32 +153,74 @@
     activeIndexList: [],
     activeMacroList: [],
     activeRestList: [],
+    activeEsqlList: [],
+    activeDataviewList: [],
 
     init: function(inputEl) {
       this.inputElement = inputEl;
       this.createMenuDOM();
       this.createModalDOM();
-      this.createIndexModalDOM();
-      this.createMacroModalDOM();
-      this.createRestModalDOM();
+      if (IS_ELK) {
+        this.createEsqlModalDOM();
+        this.createDataviewModalDOM();
+      } else {
+        this.createIndexModalDOM();
+        this.createMacroModalDOM();
+        this.createRestModalDOM();
+      }
       this.loadAllData();
     },
 
     loadAllData: function() {
       this.loadTemplates();
-      this.loadIndexes();
-      this.loadMacros();
-      this.loadRest();
+      if (IS_ELK) {
+        this.loadEsql();
+        this.loadDataviews();
+      } else {
+        this.loadIndexes();
+        this.loadMacros();
+        this.loadRest();
+      }
     },
 
     loadTemplates: function() {
-      const defaults = (global.SPABOT_DEFAULT_SAVED_SEARCHES && Array.isArray(global.SPABOT_DEFAULT_SAVED_SEARCHES)) 
-        ? global.SPABOT_DEFAULT_SAVED_SEARCHES 
-        : [];
+      const key = IS_ELK ? Storage.keys.templatesElk : Storage.keys.templates;
+      const defaultDb = IS_ELK ? global.SPABOT_DEFAULT_ELK_SAVED_SEARCHES : global.SPABOT_DEFAULT_SAVED_SEARCHES;
+      const defaults = (defaultDb && Array.isArray(defaultDb)) ? defaultDb : [];
 
-      Storage.initOrLoad(Storage.keys.templates, defaults, (data) => {
+      Storage.initOrLoad(key, defaults, (data) => {
         this.activeTemplates = data;
         this.renderTemplateList();
+      });
+    },
+
+    loadEsql: function() {
+      const defaults = (global.SPABOT_DEFAULT_ESQL_REFERENCE && Array.isArray(global.SPABOT_DEFAULT_ESQL_REFERENCE))
+        ? global.SPABOT_DEFAULT_ESQL_REFERENCE
+        : [];
+
+      Storage.initOrLoad(Storage.keys.esql, defaults, (data) => {
+        this.activeEsqlList = data;
+        // If modal is open, re-render
+        if (this.esqlModalElement && this.esqlModalElement.style.display === 'flex') {
+           const searchInput = document.getElementById('spabot-esql-search');
+           this.renderEsqlList(searchInput ? searchInput.value : '');
+        }
+      });
+    },
+
+    loadDataviews: function() {
+      const defaults = (global.SPABOT_DEFAULT_ELK_DATAVIEWS && Array.isArray(global.SPABOT_DEFAULT_ELK_DATAVIEWS))
+        ? global.SPABOT_DEFAULT_ELK_DATAVIEWS
+        : [];
+
+      Storage.initOrLoad(Storage.keys.dataviews, defaults, (data) => {
+        this.activeDataviewList = data;
+        // If modal is open, re-render
+        if (this.dataviewModalElement && this.dataviewModalElement.style.display === 'flex') {
+           const searchInput = document.getElementById('spabot-dv-search');
+           this.renderDataviewList(searchInput ? searchInput.value : '');
+        }
       });
     },
 
@@ -334,23 +393,36 @@
           return li;
       };
 
-      // Index Reference
-      actList.appendChild(createRefLi('Index Reference', 
-        () => this.openIndexModal(), 
-        () => this.openUniversalAddModal('indexes')
-      ));
+      // Index Reference (Splunk only)
+      if (!IS_ELK) {
+        actList.appendChild(createRefLi('Index Reference',
+          () => this.openIndexModal(),
+          () => this.openUniversalAddModal('indexes')
+        ));
 
-      // Macro Reference
-      actList.appendChild(createRefLi('Macro Reference', 
-        () => this.openMacroModal(), 
-        () => this.openUniversalAddModal('macros')
-      ));
+        // Macro Reference
+        actList.appendChild(createRefLi('Macro Reference',
+          () => this.openMacroModal(),
+          () => this.openUniversalAddModal('macros')
+        ));
 
-      // REST Reference
-      actList.appendChild(createRefLi('REST Reference', 
-        () => this.openRestModal(), 
-        () => this.openUniversalAddModal('rest')
-      ));
+        // REST Reference
+        actList.appendChild(createRefLi('REST Reference',
+          () => this.openRestModal(),
+          () => this.openUniversalAddModal('rest')
+        ));
+      } else {
+        // ELK / Kibana specific references
+        actList.appendChild(createRefLi('ES|QL Reference',
+          () => this.openEsqlModal(),
+          () => this.openUniversalAddModal('esql')
+        ));
+
+        actList.appendChild(createRefLi('Data View',
+          () => this.openDataviewModal(),
+          () => this.openUniversalAddModal('dataviews')
+        ));
+      }
 
       menu.appendChild(actList);
       
@@ -398,12 +470,15 @@
         let fieldsHtml = '';
         
         if (type === 'templates') {
-            title = 'Add Saved Search';
-            
+            title = IS_ELK ? 'Add Saved Search (ES|QL)' : 'Add Saved Search';
+
             // Build datalist options
             const groups = this.getExistingGroups();
             const datalistOptions = groups.map(g => `<option value="${this.escapeHtml(g)}">`).join('');
-            
+
+            const codeLabel = IS_ELK ? 'ES|QL Query' : 'SPL Code';
+            const codePlaceholder = IS_ELK ? 'FROM logs-* | WHERE ...' : 'index=_internal ...';
+
             fieldsHtml = `
                 <div class="spabot-form-group">
                     <label>Name</label>
@@ -417,17 +492,20 @@
                     </datalist>
                 </div>
                 <div class="spabot-form-group">
-                    <label>SPL Code</label>
-                    <textarea id="spabot-add-value" placeholder="index=_internal ...">${this.escapeHtml(initialData.value || '')}</textarea>
+                    <label>${codeLabel}</label>
+                    <textarea id="spabot-add-value" placeholder="${codePlaceholder}">${this.escapeHtml(initialData.value || '')}</textarea>
                 </div>
             `;
         } else {
-            // Index, Macro, Rest
-            const typeLabel = type === 'indexes' ? 'Index' : (type === 'macros' ? 'Macro' : 'REST Endpoint');
+            // Index, Macro, Rest, ES|QL syntax, Data View
+            const typeLabel = type === 'indexes' ? 'Index'
+                : (type === 'macros' ? 'Macro'
+                : (type === 'rest' ? 'REST Endpoint'
+                : (type === 'esql' ? 'ES|QL Syntax' : 'Data View')));
             title = `Add ${typeLabel}`;
             const valLabel = 'Description';
             const valPlaceholder = `Description for this ${typeLabel.toLowerCase()}...`;
-            
+
             fieldsHtml = `
                 <div class="spabot-form-group">
                     <label>Name</label>
@@ -478,9 +556,10 @@
             }
 
             if (type === 'templates') {
-                if (!value) { alert('Please enter SPL code.'); return; }
+                if (!value) { alert(IS_ELK ? 'Please enter ES|QL code.' : 'Please enter SPL code.'); return; }
                 const newItem = { name, value, group, label: name, code: value }; // Compat fields
-                Storage.saveTemplate(newItem, () => {
+                const saveTplFn = IS_ELK ? 'saveTemplateElk' : 'saveTemplate';
+                Storage[saveTplFn](newItem, () => {
                     this.loadTemplates(); // Refresh menu data
                     document.body.removeChild(modal);
                     this.modalElement = null;
@@ -489,13 +568,18 @@
                 });
             } else {
                 const newItem = { name, desc: value };
-                const saveFn = type === 'indexes' ? 'saveIndex' : (type === 'macros' ? 'saveMacro' : 'saveRest');
+                const saveFn = type === 'indexes' ? 'saveIndex'
+                    : (type === 'macros' ? 'saveMacro'
+                    : (type === 'rest' ? 'saveRest'
+                    : (type === 'esql' ? 'saveEsql' : 'saveDataview')));
                 Storage[saveFn](newItem, () => {
                     // Refresh specific list
                     if (type === 'indexes') this.loadIndexes();
                     if (type === 'macros') this.loadMacros();
                     if (type === 'rest') this.loadRest();
-                    
+                    if (type === 'esql') this.loadEsql();
+                    if (type === 'dataviews') this.loadDataviews();
+
                     document.body.removeChild(modal);
                     this.modalElement = null;
                     this.showMessage(`Saved "${name}"!`);
@@ -641,6 +725,172 @@
       // Live search
       const searchInput = document.getElementById('spabot-rest-search');
       searchInput.addEventListener('input', () => this.renderRestList(searchInput.value));
+    },
+
+    // --- ES|QL Reference Modal (ELK) ---
+    createEsqlModalDOM: function() {
+      if (this.esqlModalElement) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'spabot-modal-overlay';
+      modal.style.display = 'none';
+
+      modal.innerHTML = `
+          <div class="spabot-modal-content spabot-index-modal">
+              <h3>ES|QL Reference</h3>
+              <div class="spabot-search-box">
+                  <input type="text" id="spabot-esql-search" placeholder="Search ES|QL syntax...">
+              </div>
+              <ul id="spabot-esql-list" class="spabot-scroll-list">
+                  <!-- Items injected here -->
+              </ul>
+              <div class="spabot-modal-actions">
+                  <button id="spabot-esql-close">Close</button>
+              </div>
+          </div>
+      `;
+
+      document.body.appendChild(modal);
+      this.esqlModalElement = modal;
+
+      document.getElementById('spabot-esql-close').onclick = () => {
+          this.esqlModalElement.style.display = 'none';
+      };
+
+      // Close on click outside
+      this.esqlModalElement.onclick = (e) => {
+          if (e.target === this.esqlModalElement) {
+              this.esqlModalElement.style.display = 'none';
+          }
+      };
+
+      // Live search
+      const searchInput = document.getElementById('spabot-esql-search');
+      searchInput.addEventListener('input', () => this.renderEsqlList(searchInput.value));
+    },
+
+    // --- Data View Modal (ELK) ---
+    createDataviewModalDOM: function() {
+      if (this.dataviewModalElement) return;
+
+      const modal = document.createElement('div');
+      modal.className = 'spabot-modal-overlay';
+      modal.style.display = 'none';
+
+      modal.innerHTML = `
+          <div class="spabot-modal-content spabot-index-modal">
+              <h3>Data View</h3>
+              <div class="spabot-search-box">
+                  <input type="text" id="spabot-dv-search" placeholder="Search data views...">
+              </div>
+              <ul id="spabot-dv-list" class="spabot-scroll-list">
+                  <!-- Items injected here -->
+              </ul>
+              <div class="spabot-modal-actions">
+                  <button id="spabot-dv-close">Close</button>
+              </div>
+          </div>
+      `;
+
+      document.body.appendChild(modal);
+      this.dataviewModalElement = modal;
+
+      document.getElementById('spabot-dv-close').onclick = () => {
+          this.dataviewModalElement.style.display = 'none';
+      };
+
+      // Close on click outside
+      this.dataviewModalElement.onclick = (e) => {
+          if (e.target === this.dataviewModalElement) {
+              this.dataviewModalElement.style.display = 'none';
+          }
+      };
+
+      // Live search
+      const searchInput = document.getElementById('spabot-dv-search');
+      searchInput.addEventListener('input', () => this.renderDataviewList(searchInput.value));
+    },
+
+    openEsqlModal: function() {
+        if (!this.esqlModalElement) return;
+        this.loadEsql(); // Refresh data
+        this.esqlModalElement.style.display = 'flex';
+        document.getElementById('spabot-esql-search').value = '';
+        document.getElementById('spabot-esql-search').focus();
+        this.renderEsqlList('');
+    },
+
+    openDataviewModal: function() {
+        if (!this.dataviewModalElement) return;
+        this.loadDataviews(); // Refresh data
+        this.dataviewModalElement.style.display = 'flex';
+        document.getElementById('spabot-dv-search').value = '';
+        document.getElementById('spabot-dv-search').focus();
+        this.renderDataviewList('');
+    },
+
+    renderEsqlList: function(filterText) {
+        const listEl = document.getElementById('spabot-esql-list');
+        listEl.innerHTML = '';
+
+        const esqlItems = this.activeEsqlList || [];
+        const lowerFilter = filterText.toLowerCase();
+
+        const filtered = esqlItems.filter(item =>
+            item.name.toLowerCase().includes(lowerFilter) ||
+            (item.desc && item.desc.toLowerCase().includes(lowerFilter))
+        );
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = '<li class="empty">No ES|QL syntax found</li>';
+            return;
+        }
+
+        filtered.forEach(item => {
+            const li = document.createElement('li');
+            li.className = 'spabot-idx-item';
+            li.innerHTML = `
+                <div class="idx-name">${this.escapeHtml(item.name)}</div>
+                <div class="idx-desc">${this.escapeHtml(item.desc)}</div>
+            `;
+            li.onclick = () => {
+                this.insertCode(item.desc || item.name, false); // Insert syntax snippet
+                this.esqlModalElement.style.display = 'none';
+            };
+            listEl.appendChild(li);
+        });
+    },
+
+    renderDataviewList: function(filterText) {
+        const listEl = document.getElementById('spabot-dv-list');
+        listEl.innerHTML = '';
+
+        const dvs = this.activeDataviewList || [];
+        const lowerFilter = filterText.toLowerCase();
+
+        const filtered = dvs.filter(dv =>
+            dv.name.toLowerCase().includes(lowerFilter) ||
+            (dv.desc && dv.desc.toLowerCase().includes(lowerFilter))
+        );
+
+        if (filtered.length === 0) {
+            listEl.innerHTML = '<li class="empty">No data views found</li>';
+            return;
+        }
+
+        filtered.forEach(dv => {
+            const li = document.createElement('li');
+            li.className = 'spabot-idx-item';
+            li.innerHTML = `
+                <div class="idx-name">${this.escapeHtml(dv.name)}</div>
+                <div class="idx-desc">${this.escapeHtml(dv.desc)}</div>
+            `;
+            li.onclick = () => {
+                this.insertCode(dv.name, false); // Insert data view name
+                this.dataviewModalElement.style.display = 'none';
+            };
+            listEl.appendChild(li);
+        });
     },
 
     openIndexModal: function() {

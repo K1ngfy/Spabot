@@ -40,6 +40,85 @@
       color: #65A637;
       border-bottom: 3px solid #65A637;
     }
+
+    /* Platform Navigation (Splunk / Kibana / Settings) */
+    .platform-nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .platform-btn {
+      padding: 9px 22px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      background: #fff;
+      color: #555;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .platform-btn:hover {
+      border-color: #65A637;
+      color: #65A637;
+    }
+    .platform-btn.active {
+      background: #65A637;
+      border-color: #65A637;
+      color: #fff;
+    }
+    .tabs.hidden {
+      display: none;
+    }
+
+    /* List toolbar (search + group filter) */
+    .list-toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+    .list-toolbar.hidden {
+      display: none;
+    }
+    .list-search {
+      flex: 1;
+      min-width: 220px;
+      padding: 9px 14px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+    .list-search:focus {
+      outline: none;
+      border-color: #65A637;
+      box-shadow: 0 0 0 2px rgba(101, 166, 55, 0.15);
+    }
+    .group-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .group-chip {
+      padding: 6px 14px;
+      border-radius: 16px;
+      border: 1px solid #ddd;
+      background: #fff;
+      color: #555;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .group-chip:hover {
+      border-color: #65A637;
+      color: #65A637;
+    }
+    .group-chip.active {
+      background: #65A637;
+      border-color: #65A637;
+      color: #fff;
+    }
     
     .container {
       background: #fff;
@@ -65,14 +144,18 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 12px;
+      max-width: 100%;
     }
     .template-info {
       flex: 1;
+      min-width: 0; /* allow the info block to shrink inside flex row */
     }
     .template-label {
       font-weight: bold;
       font-size: 1.1em;
       margin-bottom: 5px;
+      overflow-wrap: anywhere;
     }
     .template-code {
       font-family: monospace;
@@ -81,12 +164,14 @@
       padding: 5px;
       border-radius: 3px;
       white-space: pre-wrap;
+      overflow-wrap: anywhere;
+      word-break: break-word;
       max-height: 100px;
       overflow-y: auto;
       font-size: 0.9em;
     }
     .actions {
-      margin-left: 20px;
+      flex-shrink: 0;
       display: flex;
       gap: 10px;
     }
@@ -173,20 +258,42 @@
 
   <h1>Spabot Configuration</h1>
   
-  <div class="tabs">
-    <button class="tab-btn active" data-tab="templates">Saved Search</button>
+  <div class="platform-nav">
+    <button class="platform-btn active" data-platform="splunk">Splunk</button>
+    <button class="platform-btn" data-platform="kibana">Kibana (ELK)</button>
+    <button class="platform-btn" data-platform="settings">General Settings</button>
+  </div>
+
+  <div class="tabs" id="tabsSplunk">
+    <button class="tab-btn active" data-tab="templates">SPL Search</button>
     <button class="tab-btn" data-tab="indexes">Indexes</button>
     <button class="tab-btn" data-tab="macros">Macros</button>
     <button class="tab-btn" data-tab="rest">REST API</button>
-    <button class="tab-btn" data-tab="settings">Settings</button>
+  </div>
+
+  <div class="tabs hidden" id="tabsKibana">
+    <button class="tab-btn" data-tab="templatesElk">ES|QL Search</button>
+    <button class="tab-btn" data-tab="esql">ES|QL Reference</button>
+    <button class="tab-btn" data-tab="dataviews">Data Views</button>
   </div>
   
-  <div id="status" style="margin-bottom:10px; color: #666; font-style: italic; height: 20px;"></div>
+  <div id="listToolbar" class="list-toolbar">
+    <input type="text" id="listSearch" class="list-search" placeholder="Search by name or content...">
+    <div id="listGroupFilters" class="group-filters"></div>
+  </div>
+
+  <div id="status" style="margin: 0 0 5px 0; color: #666; font-style: italic;"></div>
 
   <!-- Templates Container -->
   <div id="templates" class="container active">
     <button id="addTplBtn" class="btn-add">+ Add Saved Search</button>
     <ul id="templateList" class="template-list"></ul>
+  </div>
+
+  <!-- ELK Templates Container -->
+  <div id="templatesElk" class="container">
+    <button id="addTplElkBtn" class="btn-add">+ Add ELK Search</button>
+    <ul id="templateListElk" class="template-list"></ul>
   </div>
 
   <!-- Indexes Container -->
@@ -205,6 +312,18 @@
   <div id="rest" class="container">
     <button id="addRestBtn" class="btn-add">+ Add REST Endpoint</button>
     <ul id="restList" class="template-list"></ul>
+  </div>
+
+  <!-- ES|QL Reference Container -->
+  <div id="esql" class="container">
+    <button id="addEsqlBtn" class="btn-add">+ Add ES|QL Syntax</button>
+    <ul id="esqlList" class="template-list"></ul>
+  </div>
+
+  <!-- Data Views Container -->
+  <div id="dataviews" class="container">
+    <button id="addDvBtn" class="btn-add">+ Add Data View</button>
+    <ul id="dataviewList" class="template-list"></ul>
   </div>
 
   <!-- Settings Container -->
@@ -300,6 +419,8 @@
   <script src="default_indexes.js"></script>
   <script src="default_macros.js"></script>
   <script src="default_rest.js"></script>
+  <script src="default_elk_saved_searches.js"></script>
+  <script src="default_elk_reference.js"></script>
   <script src="options.js"></script>
 </body>
 </html>
