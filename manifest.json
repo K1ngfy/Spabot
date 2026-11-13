@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Spabot",
-  "version": "1.1",
+  "version": "1.2",
   "description": "An intelligent search assistant for Splunk SPL and ELK Kibana ES|QL that provides saved searches, quick references (indexes/macros/REST for Splunk, ES|QL syntax and Data Views for ELK), and a fun interactive bot interface to boost your productivity.",
   "permissions": [
     "storage"

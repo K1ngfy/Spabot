@@ -71,6 +71,78 @@
       display: none;
     }
 
+    /* Per-platform enable switch */
+    .platform-status {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: #fff;
+      border: 1px solid #e1e6eb;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 15px;
+    }
+    .platform-status.hidden {
+      display: none;
+    }
+    .platform-status.disabled .platform-status-title {
+      color: #999;
+    }
+    .platform-status-text {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .platform-status-title {
+      font-weight: 600;
+      color: #333;
+      font-size: 14px;
+    }
+    .platform-status-desc {
+      color: #888;
+      font-size: 12px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .switch-track {
+      position: absolute;
+      inset: 0;
+      background: #ccc;
+      border-radius: 12px;
+      transition: background 0.2s;
+    }
+    .switch-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 18px;
+      height: 18px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+      transition: transform 0.2s;
+    }
+    .switch input:checked + .switch-track {
+      background: #65A637;
+    }
+    .switch input:checked + .switch-track .switch-thumb {
+      transform: translateX(20px);
+    }
+    .switch input:focus-visible + .switch-track {
+      box-shadow: 0 0 0 2px rgba(101, 166, 55, 0.35);
+    }
+
     /* List toolbar (search + group filter) */
     .list-toolbar {
       display: flex;
@@ -262,6 +334,28 @@
     <button class="platform-btn active" data-platform="splunk">Splunk</button>
     <button class="platform-btn" data-platform="kibana">Kibana (ELK)</button>
     <button class="platform-btn" data-platform="settings">General Settings</button>
+  </div>
+
+  <div class="platform-status" id="statusSplunk">
+    <label class="switch" for="splunkEnabled">
+      <input type="checkbox" id="splunkEnabled" checked>
+      <span class="switch-track"><span class="switch-thumb"></span></span>
+    </label>
+    <div class="platform-status-text">
+      <span class="platform-status-title">Enable Spabot on Splunk</span>
+      <span class="platform-status-desc">When off, the Spabot icon is not injected on Splunk search pages.</span>
+    </div>
+  </div>
+
+  <div class="platform-status hidden" id="statusKibana">
+    <label class="switch" for="kibanaEnabled">
+      <input type="checkbox" id="kibanaEnabled" checked>
+      <span class="switch-track"><span class="switch-thumb"></span></span>
+    </label>
+    <div class="platform-status-text">
+      <span class="platform-status-title">Enable Spabot on Kibana</span>
+      <span class="platform-status-desc">When off, the Spabot icon is not injected on Kibana Discover pages.</span>
+    </div>
   </div>
 
   <div class="tabs" id="tabsSplunk">

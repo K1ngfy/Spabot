@@ -38,26 +38,71 @@ let isBotInjected = false;
 let currentInputEl = null;
 let currentSkin = 'default';
 let currentBubble = 'default';
+let isQuietMode = false;
+let platformEnabled = true;
+
+// Per-platform on/off switch stored in spabot_settings.
+const PLATFORM_SETTING_KEY = PLATFORM === 'elk' ? 'kibanaEnabled' : 'splunkEnabled';
+
+function isPlatformEnabled(settings) {
+  return settings[PLATFORM_SETTING_KEY] !== false;
+}
 
 function init() {
   // Not a Splunk search / Kibana Discover page: bail out early (no DOM work).
   if (!PLATFORM) return;
   log('Initializing...', PLATFORM);
-  loadSettings();
-  attemptInjection();
+  watchSettings();
   startObserver();
+  loadSettings(() => attemptInjection());
 }
 
-function loadSettings() {
+function loadSettings(callback) {
   if (chrome.storage) {
     chrome.storage.local.get(['spabot_settings'], (result) => {
       const settings = result.spabot_settings || {};
-      isQuietMode = !!settings.quietMode;
-      currentSkin = settings.skin || 'default';
-      currentBubble = settings.bubble || 'default';
-      updateAppearance();
+      applySettings(settings);
+      if (callback) callback();
     });
+  } else if (callback) {
+    callback();
   }
+}
+
+function applySettings(settings) {
+  isQuietMode = !!settings.quietMode;
+  currentSkin = settings.skin || 'default';
+  currentBubble = settings.bubble || 'default';
+  platformEnabled = isPlatformEnabled(settings);
+  updateAppearance();
+}
+
+function watchSettings() {
+  if (!chrome.storage || !chrome.storage.onChanged) return;
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace !== 'local' || !changes.spabot_settings) return;
+    const settings = changes.spabot_settings.newValue || {};
+    const wasEnabled = platformEnabled;
+    applySettings(settings);
+
+    if (platformEnabled === wasEnabled) return;
+    if (platformEnabled) {
+      attemptInjection();
+    } else {
+      removeBot();
+    }
+  });
+}
+
+function removeBot() {
+  if (window.SpabotMenu && typeof window.SpabotMenu.destroy === 'function') {
+    window.SpabotMenu.destroy();
+  }
+  const wrapper = document.querySelector('.spabot-wrapper');
+  if (wrapper) wrapper.remove();
+  const floatingBubble = document.querySelector('.spabot-speech-bubble-floating');
+  if (floatingBubble) floatingBubble.remove();
+  isBotInjected = false;
 }
 
 function updateAppearance() {
@@ -82,9 +127,11 @@ function updateAppearance() {
     
     if (bubble) {
         // Reset and apply bubble
-        // Preserve 'visible' class if present
+        // Preserve 'visible' and the Kibana floating variant if present
         const isVisible = bubble.classList.contains('visible');
+        const isFloating = bubble.classList.contains('spabot-speech-bubble-floating');
         bubble.className = 'spabot-speech-bubble';
+        if (isFloating) bubble.classList.add('spabot-speech-bubble-floating');
         if (isVisible) bubble.classList.add('visible');
         
         if (currentBubble !== 'default') {
@@ -94,6 +141,7 @@ function updateAppearance() {
 }
 
 function attemptInjection() {
+  if (!platformEnabled) return;
   if (isBotInjected || document.querySelector('.spabot-wrapper')) {
     return;
   }
@@ -163,6 +211,10 @@ function startObserver() {
 
 function injectBot(container) {
   log('Target container found:', container);
+
+  // Remove a bubble orphaned by a previous injection (e.g. Kibana re-render)
+  const staleBubble = document.querySelector('.spabot-speech-bubble-floating');
+  if (staleBubble) staleBubble.remove();
 
   // Ensure container has relative positioning for absolute child
   const style = window.getComputedStyle(container);
@@ -234,8 +286,33 @@ function injectBot(container) {
   speechBubbleText.className = 'spabot-speech-bubble-text';
   speechBubble.appendChild(speechBubbleText);
 
-  wrapper.appendChild(speechBubble);
-  
+  // Kibana's Discover query bar spans the whole viewport and clips its own
+  // children, so the bubble is hosted at body level with fixed positioning.
+  const isFloatingBubble = PLATFORM === 'elk';
+  if (isFloatingBubble) {
+    speechBubble.classList.add('spabot-speech-bubble-floating');
+    document.body.appendChild(speechBubble);
+  } else {
+    wrapper.appendChild(speechBubble);
+  }
+
+  const positionFloatingBubble = () => {
+    if (!isFloatingBubble || !wrapper.isConnected) return;
+    const rect = wrapper.getBoundingClientRect();
+    // Keep the bubble inside the viewport: pin to the right edge and place
+    // it just below the icon (Kibana's query bar sits at the top of the page).
+    const right = Math.max(12, window.innerWidth - rect.right + 30);
+    const top = Math.max(12, Math.min(rect.bottom + 14, window.innerHeight - 120));
+    speechBubble.style.right = `${right}px`;
+    speechBubble.style.top = `${top}px`;
+  };
+
+  if (isFloatingBubble) {
+    window.addEventListener('resize', () => {
+      if (speechBubble.classList.contains('visible')) positionFloatingBubble();
+    });
+  }
+
   // Close bubble on click
   speechBubble.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -244,24 +321,7 @@ function injectBot(container) {
 
   // --- Mood & Fun Logic ---
   let lastInputTime = Date.now();
-  let isQuietMode = false;
   let bubbleTimer = null;
-
-  // Load Quiet Mode setting
-  if (chrome.storage) {
-    // Initial load moved to init()
-
-    // Listen for changes
-    chrome.storage.onChanged.addListener((changes, namespace) => {
-      if (namespace === 'local' && changes.spabot_settings) {
-        const newSettings = changes.spabot_settings.newValue || {};
-        isQuietMode = !!newSettings.quietMode;
-        currentSkin = newSettings.skin || 'default';
-        currentBubble = newSettings.bubble || 'default';
-        updateAppearance();
-      }
-    });
-  }
 
   // Helper: Get Random Item from Array
   const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -293,6 +353,7 @@ function injectBot(container) {
 
   const showBubble = (text) => {
     speechBubbleText.innerText = text;
+    positionFloatingBubble();
     speechBubble.classList.add('visible');
     
     // Auto hide

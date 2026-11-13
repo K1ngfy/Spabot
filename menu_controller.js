@@ -436,6 +436,7 @@
       this.menuElement = menu;
       
       document.addEventListener('click', (e) => {
+        if (!this.menuElement) return;
         if (this.menuElement.style.display === 'block' && 
             !this.menuElement.contains(e.target) && 
             !e.target.closest('.spabot-wrapper')) {
@@ -1226,15 +1227,66 @@
       this.capturedSelection = sel ? sel.toString() : '';
       
       this.menuElement.style.display = 'block';
-      const top = anchorRect.top + anchorRect.height + 10 + window.scrollY;
-      const left = anchorRect.left + window.scrollX;
+
+      // Clamp the menu inside the viewport. On Kibana the query bar spans the
+      // whole width, so the icon sits near the right edge and an unclamped
+      // menu would be rendered outside the browser frame.
+      const menuRect = this.menuElement.getBoundingClientRect();
+      const menuWidth = menuRect.width || 200;
+      const menuHeight = menuRect.height || 0;
+      const gap = 10;
+      const pad = 8;
+      const scrollX = window.scrollX;
+      const scrollY = window.scrollY;
+      const viewportW = document.documentElement.clientWidth;
+      const viewportH = document.documentElement.clientHeight;
+
+      let left = anchorRect.left + scrollX;
+      left = Math.max(scrollX + pad, Math.min(left, scrollX + viewportW - menuWidth - pad));
+
+      // Open downward; flip above the icon when there is not enough room below
+      let top = anchorRect.top + anchorRect.height + gap + scrollY;
+      if (anchorRect.bottom + gap + menuHeight > viewportH &&
+          anchorRect.top - gap - menuHeight > 0) {
+        top = anchorRect.top - gap - menuHeight + scrollY;
+      }
+
       this.menuElement.style.top = `${top}px`;
       this.menuElement.style.left = `${left}px`;
       this.showMessage(''); 
     },
 
     hide: function() {
+      if (!this.menuElement) return;
       this.menuElement.style.display = 'none';
+    },
+
+    // Tear down all DOM owned by the menu (used when the user disables the
+    // extension for the current platform).
+    destroy: function() {
+      this.hide();
+      [
+        this.menuElement,
+        this.modalElement,
+        this.indexModalElement,
+        this.macroModalElement,
+        this.restModalElement,
+        this.esqlModalElement,
+        this.dataviewModalElement
+      ].forEach(el => {
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+      });
+
+      this.menuElement = null;
+      this.tplListElement = null;
+      this.msgArea = null;
+      this.modalElement = null;
+      this.indexModalElement = null;
+      this.macroModalElement = null;
+      this.restModalElement = null;
+      this.esqlModalElement = null;
+      this.dataviewModalElement = null;
+      this.inputElement = null;
     },
 
     insertCode: function(code, replaceAll = false) {

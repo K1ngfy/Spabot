@@ -85,6 +85,8 @@ const cancelBtn = document.getElementById('cancelBtn');
 const saveBtn = document.getElementById('saveBtn');
 const statusDiv = document.getElementById('status');
 const quietModeCheckbox = document.getElementById('quietMode');
+const splunkEnabledCheckbox = document.getElementById('splunkEnabled');
+const kibanaEnabledCheckbox = document.getElementById('kibanaEnabled');
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
@@ -139,6 +141,8 @@ function setupTabs() {
 
   // Settings listener
   quietModeCheckbox.addEventListener('change', saveSettings);
+  splunkEnabledCheckbox.addEventListener('change', saveSettings);
+  kibanaEnabledCheckbox.addEventListener('change', saveSettings);
   
   // Export/Import listeners
   const btnExport = document.getElementById('btnExport');
@@ -159,6 +163,10 @@ function setPlatformUI(platform) {
     b.classList.toggle('active', b.dataset.platform === platform));
   document.getElementById('tabsSplunk').classList.toggle('hidden', platform !== 'splunk');
   document.getElementById('tabsKibana').classList.toggle('hidden', platform !== 'kibana');
+  const statusSplunk = document.getElementById('statusSplunk');
+  const statusKibana = document.getElementById('statusKibana');
+  if (statusSplunk) statusSplunk.classList.toggle('hidden', platform !== 'splunk');
+  if (statusKibana) statusKibana.classList.toggle('hidden', platform !== 'kibana');
 }
 
 function showSettings() {
@@ -168,6 +176,10 @@ function showSettings() {
     b.classList.toggle('active', b.dataset.platform === 'settings'));
   document.getElementById('tabsSplunk').classList.add('hidden');
   document.getElementById('tabsKibana').classList.add('hidden');
+  const statusSplunk = document.getElementById('statusSplunk');
+  const statusKibana = document.getElementById('statusKibana');
+  if (statusSplunk) statusSplunk.classList.add('hidden');
+  if (statusKibana) statusKibana.classList.add('hidden');
   const toolbar = document.getElementById('listToolbar');
   if (toolbar) toolbar.classList.add('hidden');
   tabs.forEach(b => b.classList.remove('active'));
@@ -376,23 +388,36 @@ function handleHashParams() {
 function loadSettings() {
   chrome.storage.local.get([STORAGE_KEYS.settings], (result) => {
     const settings = result[STORAGE_KEYS.settings] || { quietMode: false, skin: 'default', bubble: 'default' };
-    quietModeCheckbox.checked = settings.quietMode;
-    
+    quietModeCheckbox.checked = !!settings.quietMode;
+    splunkEnabledCheckbox.checked = settings.splunkEnabled !== false;
+    kibanaEnabledCheckbox.checked = settings.kibanaEnabled !== false;
+    updatePlatformStatusUI();
+
     renderAppearanceOptions(settings.skin || 'default', settings.bubble || 'default');
     updatePreview(settings.skin || 'default', settings.bubble || 'default');
   });
 }
 
+function updatePlatformStatusUI() {
+  document.getElementById('statusSplunk').classList.toggle('disabled', !splunkEnabledCheckbox.checked);
+  document.getElementById('statusKibana').classList.toggle('disabled', !kibanaEnabledCheckbox.checked);
+}
+
 function saveSettings() {
   // Get selected skin and bubble
-  const selectedSkin = document.querySelector('input[name="skin"]:checked').value;
-  const selectedBubble = document.querySelector('input[name="bubble"]:checked').value;
+  const skinInput = document.querySelector('input[name="skin"]:checked');
+  const bubbleInput = document.querySelector('input[name="bubble"]:checked');
+  const selectedSkin = skinInput ? skinInput.value : 'default';
+  const selectedBubble = bubbleInput ? bubbleInput.value : 'default';
 
   const settings = {
     quietMode: quietModeCheckbox.checked,
+    splunkEnabled: splunkEnabledCheckbox.checked,
+    kibanaEnabled: kibanaEnabledCheckbox.checked,
     skin: selectedSkin,
     bubble: selectedBubble
   };
+  updatePlatformStatusUI();
   chrome.storage.local.set({ [STORAGE_KEYS.settings]: settings }, () => {
     // Silent success: the live preview is the feedback. Showing the top
     // "Settings saved." banner on every radio/checkbox click shifts the
