@@ -21,13 +21,8 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "*://*/*/app/*/search*",
-        "*://localhost/*/app/*/search*",
-        "*://*/*/app/discover*",
-        "*://localhost/*/app/discover*"
-      ],
-      "js": ["default_saved_searches.js", "default_indexes.js", "default_macros.js", "default_rest.js", "default_elk_saved_searches.js", "default_elk_reference.js", "quotes_db.js", "menu_controller.js", "content.js"],
+      "matches": ["<all_urls>"],
+      "js": ["default_saved_searches.js", "default_indexes.js", "default_macros.js", "default_rest.js", "default_elk_saved_searches.js", "default_elk_reference.js", "quotes_db.js", "icon_shapes.js", "menu_controller.js", "content.js"],
       "css": ["styles.css"]
     }
   ],

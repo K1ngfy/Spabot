@@ -13,13 +13,19 @@ const STORAGE_KEYS = {
 
 const SKIN_OPTIONS = [
     { value: 'default', label: 'Default (Kawaii Green)' },
-    { value: 'bilibili', label: 'Bilibili Pink (TV)' },
-    { value: 'bilibili-blue', label: 'Bilibili Blue (TV)' },
-    { value: 'cyberpunk', label: 'Cyberpunk (Neon)' },
     { value: 'steampunk', label: 'Steampunk (Brass)' },
-    { value: 'ninja', label: 'Dark Mode (Ninja)' },
     { value: 'retro', label: 'Retro (Gameboy)' },
-    { value: 'mecha', label: 'Mecha (Gundam)' }
+    { value: 'ufo', label: 'UFO (Flying Saucer)' },
+    { value: 'cat', label: 'Cat Bot (Ears & Whiskers)' },
+    { value: 'astro', label: 'Astro (Helmet)' },
+    { value: 'octo', label: 'Octo (Tentacles)' },
+    { value: 'panda', label: 'Panda Bot' },
+    { value: 'duck', label: 'Ducky (Duckling)' },
+    { value: 'penguin', label: 'Penguin Bot' },
+    { value: 'bunny', label: 'Bunny (Long Ears)' },
+    { value: 'frog', label: 'Frog Bot' },
+    { value: 'slime', label: 'Slime (Jelly)' },
+    { value: 'bili-tv', label: 'Bilibili TV (Blue)' }
 ];
 
 const BUBBLE_OPTIONS = [
@@ -388,8 +394,13 @@ function saveSettings() {
     bubble: selectedBubble
   };
   chrome.storage.local.set({ [STORAGE_KEYS.settings]: settings }, () => {
-    showStatus('Settings saved.');
-    setTimeout(() => { showStatus(''); }, 2000);
+    // Silent success: the live preview is the feedback. Showing the top
+    // "Settings saved." banner on every radio/checkbox click shifts the
+    // page layout (visible jitter) and is noisy. Only report errors.
+    if (chrome.runtime.lastError) {
+      showStatus('Error saving settings: ' + chrome.runtime.lastError.message);
+      setTimeout(() => { showStatus(''); }, 3000);
+    }
   });
 }
 
@@ -436,22 +447,28 @@ function renderAppearanceOptions(currentSkin, currentBubble) {
 function updatePreview(skin, bubble) {
     const wrapper = document.getElementById('previewWrapper');
     const bubbleEl = document.getElementById('previewBubble');
-    
+
     if (!wrapper || !bubbleEl) return;
-    
+
     // Reset classes
     wrapper.className = 'spabot-wrapper';
     bubbleEl.className = 'spabot-speech-bubble visible';
-    
+
     // Apply Skin
     if (skin !== 'default') {
         wrapper.classList.add(`spabot-skin-${skin}`);
     }
-    
+
     // Apply Bubble
     if (bubble !== 'default') {
         bubbleEl.classList.add(`spabot-bubble-${bubble}`);
     }
+
+    // Shape skins (ufo/cat/astro/octo/...) use a different DOM:
+    // rebuild the preview icon instead of only toggling classes
+    const oldIcon = wrapper.querySelector('.spabot-icon');
+    if (oldIcon) oldIcon.remove();
+    wrapper.insertBefore(buildIcon(skin), wrapper.firstChild);
 }
 
 function loadData() {

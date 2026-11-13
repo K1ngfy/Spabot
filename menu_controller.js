@@ -1267,8 +1267,11 @@
     updateInputValue: function(newValue, selectAll = false) {
       const el = this.inputElement;
       const isACE = el.classList.contains('ace_text-input');
+      // Monaco hidden inputarea (Kibana 8.x+/9.x ES|QL editor) behaves like ACE:
+      // direct value assignment is ignored, must go through execCommand.
+      const isMonaco = el.classList.contains('inputarea') && !!el.closest('.monaco-editor');
 
-      if (isACE) {
+      if (isACE || isMonaco) {
         try {
           el.focus();
           if (selectAll) {

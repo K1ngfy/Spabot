@@ -698,28 +698,7 @@
 
 /* --- Spabot Themes (Skins) --- */
 
-/* 1. Cyberpunk */
-.spabot-skin-cyberpunk .spabot-head {
-  background: #2b213a;
-  box-shadow: 0 0 10px rgba(255, 0, 85, 0.5), inset 0 0 5px rgba(0, 243, 255, 0.3);
-  border: 1px solid #ff0055;
-}
-.spabot-skin-cyberpunk .spabot-face-screen {
-  background: #050510;
-  box-shadow: inset 0 0 5px rgba(0, 243, 255, 0.2);
-}
-.spabot-skin-cyberpunk .spabot-eye {
-  background: #00f3ff;
-  box-shadow: 0 0 6px #00f3ff;
-}
-.spabot-skin-cyberpunk .spabot-mouth {
-  border-bottom-color: #00f3ff;
-}
-.spabot-skin-cyberpunk:hover .spabot-head {
-  box-shadow: 0 0 15px rgba(255, 0, 85, 0.8);
-}
-
-/* 2. Steampunk */
+/* 1. Steampunk */
 .spabot-skin-steampunk .spabot-head {
   background: linear-gradient(135deg, #b87333 0%, #8b4513 100%);
   border: 1px solid #5d4037;
@@ -737,24 +716,7 @@
   border-bottom-color: #ffd700;
 }
 
-/* 3. Dark Mode (Ninja) */
-.spabot-skin-ninja .spabot-head {
-  background: #212121;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-}
-.spabot-skin-ninja .spabot-face-screen {
-  background: #000;
-  border: 1px solid #333;
-}
-.spabot-skin-ninja .spabot-eye {
-  background: #fff;
-  box-shadow: none;
-}
-.spabot-skin-ninja .spabot-mouth {
-  border-bottom-color: #fff;
-}
-
-/* 4. Retro (Gameboy) */
+/* 2. Retro (Gameboy) */
 .spabot-skin-retro .spabot-head {
   background: #8bac0f;
   border: 2px solid #0f380f;
@@ -775,71 +737,601 @@
   border-radius: 0;
 }
 
-/* 5. Mecha (Gundam) */
-.spabot-skin-mecha .spabot-head {
+/* --- Shape Skins (distinct DOM structures, built by icon_shapes.js) --- */
+
+/* UFO: dome with alien eyes + saucer with blinking lights + tractor beam */
+.spabot-shape-ufo .spabot-ufo-dome {
+  position: absolute;
+  top: 0;
+  left: 7px;
+  width: 16px;
+  height: 11px;
+  background: rgba(128, 222, 234, 0.35);
+  border: 1px solid rgba(77, 208, 225, 0.8);
+  border-radius: 9px 9px 2px 2px;
+  z-index: 1;
+}
+.spabot-shape-ufo .spabot-eye {
+  width: 2.5px;
+  height: 2.5px;
+  top: auto;
+  bottom: 1.5px;
+  background: #006064;
+  box-shadow: none;
+}
+.spabot-shape-ufo .spabot-eye.left { left: 4px; }
+.spabot-shape-ufo .spabot-eye.right { right: 4px; }
+.spabot-shape-ufo .spabot-ufo-saucer {
+  position: absolute;
+  bottom: 3px;
+  left: 0;
+  width: 30px;
+  height: 8px;
+  background: linear-gradient(180deg, #9575cd 0%, #512da8 100%);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  z-index: 2;
+  transition: box-shadow 0.3s;
+}
+.spabot-shape-ufo .spabot-ufo-light {
+  width: 2.5px;
+  height: 2.5px;
+  border-radius: 50%;
+  background: #ffee58;
+  box-shadow: 0 0 3px #ffee58;
+  animation: spabot-ufo-lights 1.2s infinite;
+}
+.spabot-shape-ufo .spabot-ufo-light:nth-child(2) { animation-delay: 0.4s; }
+.spabot-shape-ufo .spabot-ufo-light:nth-child(3) { animation-delay: 0.8s; }
+@keyframes spabot-ufo-lights {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.15; }
+}
+.spabot-shape-ufo .spabot-ufo-beam {
+  position: absolute;
+  bottom: -3px;
+  left: 8px;
+  width: 14px;
+  height: 6px;
+  background: linear-gradient(180deg, rgba(255, 238, 88, 0.45), rgba(255, 238, 88, 0));
+  clip-path: polygon(35% 0, 65% 0, 100% 100%, 0 100%);
+  animation: spabot-ufo-beam 2s infinite ease-in-out;
+  z-index: 0;
+}
+@keyframes spabot-ufo-beam {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.9; }
+}
+.spabot-wrapper:hover .spabot-shape-ufo .spabot-ufo-saucer {
+  box-shadow: 0 0 10px rgba(149, 117, 205, 0.9);
+}
+
+/* Cat: ginger round head, pointy ears and whiskers */
+.spabot-shape-cat .spabot-head {
+  width: 22px;
+  height: 18px;
+  left: 4px;
+  border-radius: 10px;
+  background: #f5a623;
+}
+.spabot-shape-cat .spabot-cat-ear {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-bottom: 9px solid #f5a623;
+  z-index: 1;
+  transition: transform 0.3s;
+}
+.spabot-shape-cat .spabot-cat-ear.left { left: 3px; }
+.spabot-shape-cat .spabot-cat-ear.right { right: 3px; }
+.spabot-shape-cat .spabot-cat-ear::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: -2px;
+  width: 0;
+  height: 0;
+  border-left: 2px solid transparent;
+  border-right: 2px solid transparent;
+  border-bottom: 4px solid #ffcc80;
+}
+.spabot-wrapper:hover .spabot-shape-cat .spabot-cat-ear.left { transform: rotate(-12deg); }
+.spabot-wrapper:hover .spabot-shape-cat .spabot-cat-ear.right { transform: rotate(12deg); }
+.spabot-shape-cat .spabot-eye {
+  width: 3px;
+  height: 3px;
+  top: 6px;
+  background: #4e342e;
+  box-shadow: none;
+}
+.spabot-shape-cat .spabot-eye.left { left: 5px; }
+.spabot-shape-cat .spabot-eye.right { right: 5px; }
+.spabot-shape-cat .spabot-mouth {
+  width: 5px;
+  height: 3px;
+  bottom: 4px;
+  border-bottom: 1.5px solid #6d4c41;
+  border-radius: 0 0 50% 50%;
+}
+.spabot-shape-cat .spabot-cat-whisker {
+  position: absolute;
+  top: 9px;
+  width: 7px;
+  height: 1px;
+  background: rgba(93, 64, 55, 0.5);
+}
+.spabot-shape-cat .spabot-cat-whisker.left { left: -5px; transform: rotate(8deg); }
+.spabot-shape-cat .spabot-cat-whisker.right { right: -5px; transform: rotate(-8deg); }
+
+/* Astro: white helmet, beacon antenna and a dark visor */
+.spabot-shape-astro .spabot-head {
+  width: 24px;
+  height: 22px;
+  left: 3px;
+  border-radius: 50%;
+  background: #eceff1;
+  border: 1px solid #b0bec5;
+}
+.spabot-shape-astro .spabot-head::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 8px;
+  height: 4px;
+  background: rgba(255,255,255,0.9);
+  border-radius: 50%;
+  transform: rotate(-25deg);
+}
+.spabot-shape-astro .spabot-astro-antenna {
+  position: absolute;
+  top: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 6px;
+  background: #90a4ae;
+  z-index: 0;
+}
+.spabot-shape-astro .spabot-astro-antenna::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #ef5350;
+  animation: spabot-astro-beacon 1.5s infinite;
+}
+@keyframes spabot-astro-beacon {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px #ef5350; }
+  50% { opacity: 0.3; box-shadow: none; }
+}
+.spabot-shape-astro .spabot-astro-visor {
+  position: absolute;
+  top: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 17px;
+  height: 9px;
+  background: #263238;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.spabot-shape-astro .spabot-eye {
+  width: 2.5px;
+  height: 2.5px;
+  top: 3px;
+  background: #4fc3f7;
+  box-shadow: 0 0 3px #4fc3f7;
+}
+.spabot-shape-astro .spabot-eye.left { left: 4px; }
+.spabot-shape-astro .spabot-eye.right { right: 4px; }
+
+/* Panda: white head, black ears and eye patches */
+.spabot-shape-panda .spabot-panda-ear {
+  position: absolute;
+  top: -2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #212121;
+  z-index: 0;
+}
+.spabot-shape-panda .spabot-panda-ear.left { left: 3px; }
+.spabot-shape-panda .spabot-panda-ear.right { right: 3px; }
+.spabot-shape-panda .spabot-head {
+  width: 22px;
+  height: 18px;
+  left: 4px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+}
+.spabot-shape-panda .spabot-panda-patch {
+  position: absolute;
+  top: 5px;
+  width: 5.5px;
+  height: 6px;
+  border-radius: 50%;
+  background: #212121;
+}
+.spabot-shape-panda .spabot-panda-patch.left { left: 3px; transform: rotate(18deg); }
+.spabot-shape-panda .spabot-panda-patch.right { right: 3px; transform: rotate(-18deg); }
+.spabot-shape-panda .spabot-eye {
+  width: 1.5px;
+  height: 1.5px;
+  top: 7px;
   background: #fff;
-  border-top: 2px solid #e53935; /* Red accent */
-  border-bottom: 2px solid #1e88e5; /* Blue accent */
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  box-shadow: none;
+  z-index: 2;
 }
-.spabot-skin-mecha .spabot-face-screen {
-  background: #1a237e;
-  border: 1px solid #3949ab;
+.spabot-shape-panda .spabot-eye.left { left: 5px; }
+.spabot-shape-panda .spabot-eye.right { right: 5px; }
+.spabot-shape-panda .spabot-panda-nose {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2.5px;
+  height: 2px;
+  border-radius: 1px;
+  background: #212121;
 }
-.spabot-skin-mecha .spabot-eye {
-  background: #00e676; /* Green eyes */
-  box-shadow: 0 0 4px #00e676;
-}
-.spabot-skin-mecha .spabot-mouth {
-  border-bottom-color: #ffd600; /* Yellow mouth */
+.spabot-shape-panda .spabot-mouth {
+  width: 3px;
+  height: 2px;
+  bottom: 3px;
+  border-bottom: 1px solid #424242;
+  border-radius: 0 0 50% 50%;
 }
 
-/* 6. Bilibili Pink */
-.spabot-skin-bilibili .spabot-head {
-  background: #fb7299;
-  box-shadow: 0 2px 5px rgba(251, 114, 153, 0.4);
-  border-radius: 11px;
+/* Duck: yellow round head, orange flat beak and a hair tuft */
+.spabot-shape-duck .spabot-head {
+  width: 20px;
+  height: 18px;
+  left: 5px;
+  bottom: 1px;
+  border-radius: 50% 50% 45% 45%;
+  background: #ffd54f;
 }
-.spabot-skin-bilibili .spabot-face-screen {
-  background: #ffffff;
-  border: 1px solid #fce4ec;
+.spabot-shape-duck .spabot-head::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: 8px;
+  width: 3px;
+  height: 5px;
+  background: #ffd54f;
+  border-radius: 2px;
+  transform: rotate(15deg);
 }
-.spabot-skin-bilibili .spabot-eye {
-  background: #333;
+.spabot-shape-duck .spabot-eye {
+  width: 2.5px;
+  height: 2.5px;
+  top: 5px;
+  background: #5d4037;
   box-shadow: none;
-  width: 4px;
-  height: 4px;
-  top: 4px;
 }
-.spabot-skin-bilibili .spabot-mouth {
-  border-bottom: 2px solid #333;
-  width: 6px;
-  height: 3px;
-  bottom: 3px;
+.spabot-shape-duck .spabot-eye.left { left: 4px; }
+.spabot-shape-duck .spabot-eye.right { right: 4px; }
+.spabot-shape-duck .spabot-duck-beak {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 4px;
+  background: #ff9800;
+  border-radius: 1px 3px 3px 3px;
+  z-index: 2;
 }
 
-/* 7. Bilibili Blue */
-.spabot-skin-bilibili-blue .spabot-head {
-  background: #23ade5;
-  box-shadow: 0 2px 5px rgba(35, 173, 229, 0.4);
-  border-radius: 11px;
+/* Penguin: dark body, white belly, orange beak and feet */
+.spabot-shape-penguin .spabot-penguin-foot {
+  position: absolute;
+  bottom: 0;
+  width: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: #ff9800;
+  z-index: 0;
 }
-.spabot-skin-bilibili-blue .spabot-face-screen {
-  background: #ffffff;
-  border: 1px solid #e3f2fd;
+.spabot-shape-penguin .spabot-penguin-foot.left { left: 9px; }
+.spabot-shape-penguin .spabot-penguin-foot.right { right: 9px; }
+.spabot-shape-penguin .spabot-head {
+  width: 16px;
+  height: 18px;
+  left: 7px;
+  bottom: 1px;
+  border-radius: 50% 50% 45% 45%;
+  background: linear-gradient(180deg, #455a64 0%, #263238 100%);
+  border: 1px solid #1c262b;
 }
-.spabot-skin-bilibili-blue .spabot-eye {
-  background: #333;
+.spabot-shape-penguin .spabot-penguin-belly {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #eceff1;
+}
+.spabot-shape-penguin .spabot-eye {
+  width: 2.5px;
+  height: 2.5px;
+  top: 3px;
+  background: #fff;
   box-shadow: none;
+}
+.spabot-shape-penguin .spabot-eye.left { left: 4px; }
+.spabot-shape-penguin .spabot-eye.right { right: 4px; }
+.spabot-shape-penguin .spabot-penguin-beak {
+  position: absolute;
+  top: 6px;
+  left: 13px;
+  width: 4px;
+  height: 3px;
+  background: #ffa726;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  z-index: 2;
+}
+
+/* Bunny: white round head with long pink-lined ears and blush cheeks */
+.spabot-shape-bunny .spabot-bunny-ear {
+  position: absolute;
+  top: -6px;
+  width: 4.5px;
+  height: 14px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+  border-radius: 3px;
+  z-index: 0;
+}
+.spabot-shape-bunny .spabot-bunny-ear::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 8px;
+  border-radius: 1.5px;
+  background: #f8bbd0;
+}
+.spabot-shape-bunny .spabot-bunny-ear.left { left: 6px; transform: rotate(-8deg); }
+.spabot-shape-bunny .spabot-bunny-ear.right { right: 6px; transform: rotate(8deg); }
+.spabot-shape-bunny .spabot-head {
+  width: 18px;
+  height: 14px;
+  left: 6px;
+  bottom: 0;
+  border-radius: 9px;
+  background: #fafafa;
+  border: 1px solid #e0e0e0;
+}
+.spabot-shape-bunny .spabot-eye {
+  width: 2px;
+  height: 2px;
+  top: 6px;
+  background: #4e342e;
+  box-shadow: none;
+}
+.spabot-shape-bunny .spabot-eye.left { left: 4px; }
+.spabot-shape-bunny .spabot-eye.right { right: 4px; }
+.spabot-shape-bunny .spabot-bunny-nose {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: #ec407a;
+}
+.spabot-shape-bunny .spabot-bunny-cheek {
+  position: absolute;
+  top: 8px;
+  width: 3.5px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(248, 187, 208, 0.7);
+}
+.spabot-shape-bunny .spabot-bunny-cheek.left { left: 1.5px; }
+.spabot-shape-bunny .spabot-bunny-cheek.right { right: 1.5px; }
+
+/* Frog: green wide head with goggle-like eye bumps */
+.spabot-shape-frog .spabot-frog-bump {
+  position: absolute;
+  top: 0;
+  width: 8px;
+  height: 9px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #81c784, #4caf50);
+  z-index: 1;
+}
+.spabot-shape-frog .spabot-frog-bump.left { left: 5px; }
+.spabot-shape-frog .spabot-frog-bump.right { right: 5px; }
+.spabot-shape-frog .spabot-eye {
   width: 4px;
   height: 4px;
-  top: 4px;
+  top: 2.5px;
+  left: 2px;
+  background: #fff;
+  box-shadow: none;
 }
-.spabot-skin-bilibili-blue .spabot-mouth {
-  border-bottom: 2px solid #333;
-  width: 6px;
+.spabot-shape-frog .spabot-eye::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  background: #1b5e20;
+}
+.spabot-shape-frog .spabot-head {
+  width: 22px;
+  height: 13px;
+  left: 4px;
+  bottom: 0;
+  border-radius: 8px 8px 11px 11px;
+  background: linear-gradient(180deg, #81c784 0%, #43a047 100%);
+}
+.spabot-shape-frog .spabot-mouth {
+  width: 10px;
   height: 3px;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom: 1.5px solid #1b5e20;
+  border-radius: 0 0 50% 50%;
+}
+.spabot-shape-frog .spabot-frog-cheek {
+  position: absolute;
+  bottom: 4px;
+  width: 3.5px;
+  height: 2px;
+  border-radius: 50%;
+  background: rgba(248, 187, 208, 0.8);
+}
+.spabot-shape-frog .spabot-frog-cheek.left { left: 3px; }
+.spabot-shape-frog .spabot-frog-cheek.right { right: 3px; }
+
+/* Slime: translucent jelly dome with a gloss highlight */
+.spabot-shape-slime .spabot-head {
+  width: 20px;
+  height: 16px;
+  left: 5px;
+  bottom: 0;
+  border-radius: 10px 10px 7px 7px / 13px 13px 6px 6px;
+  background: linear-gradient(160deg, #b2ebf2 0%, #4dd0e1 55%, #26c6da 100%);
+  box-shadow: inset 0 -2px 3px rgba(0, 96, 100, 0.25);
+}
+.spabot-shape-slime .spabot-head::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  width: 6px;
+  height: 3.5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.65);
+  transform: rotate(-20deg);
+}
+.spabot-shape-slime .spabot-head::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 2px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #4dd0e1;
+}
+.spabot-shape-slime .spabot-eye {
+  width: 2.5px;
+  height: 3px;
+  top: 6px;
+  background: #006064;
+  border-radius: 40%;
+  box-shadow: none;
+}
+.spabot-shape-slime .spabot-eye.left { left: 5px; }
+.spabot-shape-slime .spabot-eye.right { right: 5px; }
+.spabot-shape-slime .spabot-mouth {
+  width: 4px;
+  height: 2px;
+  bottom: 4px;
+  border-bottom: 1px solid #006064;
+  border-radius: 0 0 50% 50%;
+}
+
+/* Bilibili TV: blue outline TV with antennae and two pill eyes (official icon style) */
+.spabot-shape-bili-tv .spabot-bili-antenna {
+  position: absolute;
+  top: 0;
+  width: 2px;
+  height: 6px;
+  background: #00a1d6;
+  border-radius: 1px;
+  z-index: 0;
+}
+.spabot-shape-bili-tv .spabot-bili-antenna.left { left: 8px; transform: rotate(-35deg); }
+.spabot-shape-bili-tv .spabot-bili-antenna.right { right: 8px; transform: rotate(35deg); }
+.spabot-shape-bili-tv .spabot-head {
+  width: 16px;
+  height: 14px;
+  left: 7px;
+  bottom: 2px;
+  border-radius: 5px;
+  background: #fff;
+  border: 2px solid #00a1d6;
+}
+.spabot-shape-bili-tv .spabot-bili-eye {
+  position: absolute;
+  top: 3px;
+  width: 2.5px;
+  height: 5px;
+  border-radius: 1.5px;
+  background: #00a1d6;
+}
+.spabot-shape-bili-tv .spabot-bili-eye.left { left: 3.5px; }
+.spabot-shape-bili-tv .spabot-bili-eye.right { right: 3.5px; }
+
+/* Octo: purple dome head with four wiggling tentacles */
+.spabot-shape-octo .spabot-head {
+  width: 20px;
+  height: 16px;
+  left: 5px;
+  bottom: 5px;
+  border-radius: 10px 10px 7px 7px;
+  background: linear-gradient(180deg, #ce93d8, #ab47bc);
+}
+.spabot-shape-octo .spabot-eye {
+  width: 3.5px;
+  height: 3.5px;
+  top: 5px;
+  background: #fff;
+  box-shadow: none;
+}
+.spabot-shape-octo .spabot-eye.left { left: 4px; }
+.spabot-shape-octo .spabot-eye.right { right: 4px; }
+.spabot-shape-octo .spabot-mouth {
+  width: 4px;
+  height: 2px;
   bottom: 3px;
+  border-bottom: 1px solid rgba(255,255,255,0.7);
+}
+.spabot-shape-octo .spabot-octo-tentacles {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1px;
+}
+.spabot-shape-octo .spabot-octo-tentacle {
+  width: 3px;
+  height: 6px;
+  background: #ab47bc;
+  border-radius: 0 0 3px 3px;
+  transform-origin: top center;
+  animation: spabot-octo-wiggle 1.6s infinite ease-in-out;
+}
+.spabot-shape-octo .spabot-octo-tentacle:nth-child(2) { animation-delay: 0.2s; }
+.spabot-shape-octo .spabot-octo-tentacle:nth-child(3) { animation-delay: 0.4s; }
+.spabot-shape-octo .spabot-octo-tentacle:nth-child(4) { animation-delay: 0.6s; }
+@keyframes spabot-octo-wiggle {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(8deg); }
 }
 
 /* --- Bubble Themes --- */

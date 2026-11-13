@@ -24,9 +24,12 @@ const PLATFORM_SELECTORS = {
     'textarea[name="q"]'          // Fallback
   ],
   elk: [
-    'textarea[data-test-subj="queryInput"]',       // Official Kibana test locator (7.x/8.x)
+    'textarea[data-test-subj="queryInput"]',       // Official Kibana test locator (7.x/8.x classic)
     '.kbnQueryBar textarea',                       // Query bar container fallback
-    'div[data-test-subj="kbnQueryBar"] textarea'   // Container test-subj fallback
+    'div[data-test-subj="kbnQueryBar"] textarea',  // Container test-subj fallback
+    '[data-test-subj="globalQueryBar"] textarea',  // Monaco inputarea (8.x+/9.x ES|QL editor)
+    '.kibanaCodeEditor textarea',                  // Monaco code editor wrapper fallback
+    '[data-test-subj="ESQLEditor"] textarea'       // ES|QL editor container fallback
   ]
 };
 
@@ -37,7 +40,9 @@ let currentSkin = 'default';
 let currentBubble = 'default';
 
 function init() {
-  log('Initializing...');
+  // Not a Splunk search / Kibana Discover page: bail out early (no DOM work).
+  if (!PLATFORM) return;
+  log('Initializing...', PLATFORM);
   loadSettings();
   attemptInjection();
   startObserver();
@@ -64,6 +69,14 @@ function updateAppearance() {
         wrapper.className = 'spabot-wrapper';
         if (currentSkin !== 'default') {
             wrapper.classList.add(`spabot-skin-${currentSkin}`);
+        }
+        // Shape skins use a different DOM: rebuild the icon when shape changes
+        const shape = SKIN_ICON_BUILDERS[currentSkin] ? currentSkin : 'default';
+        if (wrapper.dataset.shape !== shape) {
+            wrapper.dataset.shape = shape;
+            const oldIcon = wrapper.querySelector('.spabot-icon');
+            if (oldIcon) oldIcon.remove();
+            wrapper.insertBefore(buildIcon(currentSkin), wrapper.firstChild);
         }
     }
     
@@ -97,8 +110,16 @@ function findSearchContainer() {
     const el = document.querySelector(selector);
     if (el) {
       // If it's the ACE editor itself, we want its parent wrapper usually
-      // If it's a textarea, we might want its parent wrapper
-      return el.classList.contains('ace_editor') ? el.parentElement : (el.parentElement || el);
+      if (el.classList.contains('ace_editor')) return el.parentElement;
+      // Monaco hidden inputarea (Kibana 8.x+/9.x ES|QL editor):
+      // anchor the bot to the stable outer code-editor wrapper, not Monaco's
+      // internal overflow-guard (which gets re-rendered and clips overflow)
+      if (el.classList.contains('inputarea')) {
+        return el.closest('.kibanaCodeEditor')
+          || el.closest('[data-test-subj="globalQueryBar"]')
+          || el.parentElement;
+      }
+      return el.parentElement || el;
     }
   }
   return null;
@@ -137,6 +158,9 @@ function startObserver() {
   });
 }
 
+// Icon shape builders live in icon_shapes.js (shared with the options page
+// preview): buildIcon(skin) / SKIN_ICON_BUILDERS.
+
 function injectBot(container) {
   log('Target container found:', container);
 
@@ -167,40 +191,11 @@ function injectBot(container) {
   }
   wrapper.title = 'Spabot - Click for options';
 
-  // Create Icon Structure (Simplified for Kawaii Splunk Green design)
-  // <div class="spabot-icon">
-  //   <div class="spabot-head">
-  //     <div class="spabot-face-screen">
-  //       <div class="spabot-eye left"></div>
-  //       <div class="spabot-eye right"></div>
-  //       <div class="spabot-mouth"></div>
-  //     </div>
-  //   </div>
-  // </div>
-  const icon = document.createElement('div');
-  icon.className = 'spabot-icon';
-  
-  const head = document.createElement('div');
-  head.className = 'spabot-head';
-  
-  const faceScreen = document.createElement('div');
-  faceScreen.className = 'spabot-face-screen';
-  
-  const eyeLeft = document.createElement('div');
-  eyeLeft.className = 'spabot-eye left';
-  
-  const eyeRight = document.createElement('div');
-  eyeRight.className = 'spabot-eye right';
-  
-  const mouth = document.createElement('div');
-  mouth.className = 'spabot-mouth';
-  
-  faceScreen.appendChild(eyeLeft);
-  faceScreen.appendChild(eyeRight);
-  faceScreen.appendChild(mouth);
-  
-  head.appendChild(faceScreen);
-  icon.appendChild(head);
+  // Create Icon: dispatch to a shape builder based on the active skin.
+  // Shape skins (ufo/cat/astro/octo/...) build a completely different
+  // DOM structure; other skins restyle the default capsule robot via CSS.
+  const icon = buildIcon(currentSkin);
+  wrapper.dataset.shape = SKIN_ICON_BUILDERS[currentSkin] ? currentSkin : 'default';
 
   // Assemble
   wrapper.appendChild(icon);
