@@ -4,7 +4,7 @@
 
   // --- Platform Detection ---
   // This script loads before content.js, so detect from URL directly.
-  const IS_ELK = location.pathname.includes('/app/discover');
+  const IS_ELK = /(?:^|\/)app\/discover(?:\/|$)/.test(location.pathname);
   const PLATFORM = IS_ELK ? 'elk' : 'splunk';
 
   // --- Logic Helpers ---

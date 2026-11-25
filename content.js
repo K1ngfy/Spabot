@@ -5,11 +5,18 @@ function log(...args) {
   console.log(LOG_PREFIX, ...args);
 }
 
-// Platform detection: 'elk' (Kibana Discover) | 'splunk' | null
-function detectPlatform() {
-  const path = location.pathname;
-  if (path.includes('/app/discover')) return 'elk';
-  if (path.includes('/search')) return 'splunk';
+// Platform detection: 'elk' (Kibana Discover) | 'splunk' (Splunk Search view) | null
+// Splunk Search URLs follow /[<prefix>/][<locale>/]app/<app_name>/search (optional trailing slash).
+// Using an exact view-name match avoids matching other pages inside the "search" app
+// (e.g. /en-US/app/search/dashboards, /reports, /alerts, /datasets), manager pages
+// (e.g. /en-US/manager/search/..., /saved/searches), or views prefixed with "search"
+// (e.g. /en-US/app/splunk_monitoring_console/search_activity_deployment).
+const ELK_DISCOVER_PATH_RE = /(?:^|\/)app\/discover(?:\/|$)/;
+const SPLUNK_SEARCH_PATH_RE = /(?:^|\/)app\/[^/]+\/search\/?$/;
+
+function detectPlatform(pathname = location.pathname) {
+  if (ELK_DISCOVER_PATH_RE.test(pathname)) return 'elk';
+  if (SPLUNK_SEARCH_PATH_RE.test(pathname)) return 'splunk';
   return null;
 }
 const PLATFORM = detectPlatform();
@@ -34,6 +41,7 @@ const PLATFORM_SELECTORS = {
 };
 
 let observer = null;
+let heartbeatTimer = null;
 let isBotInjected = false;
 let currentInputEl = null;
 let currentSkin = 'default';
@@ -95,6 +103,10 @@ function watchSettings() {
 }
 
 function removeBot() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
   if (window.SpabotMenu && typeof window.SpabotMenu.destroy === 'function') {
     window.SpabotMenu.destroy();
   }
@@ -142,6 +154,10 @@ function updateAppearance() {
 
 function attemptInjection() {
   if (!platformEnabled) return;
+  if (detectPlatform() !== PLATFORM) {
+    removeBot();
+    return;
+  }
   if (isBotInjected || document.querySelector('.spabot-wrapper')) {
     return;
   }
@@ -193,6 +209,12 @@ function findInputElement(container) {
 
 function startObserver() {
   observer = new MutationObserver((mutations) => {
+    if (detectPlatform() !== PLATFORM) {
+      if (isBotInjected || document.querySelector('.spabot-wrapper')) {
+        removeBot();
+      }
+      return;
+    }
     // If we lost the bot (e.g. page rerender), try to inject again
     if (!document.querySelector('.spabot-wrapper')) {
       isBotInjected = false;
@@ -375,21 +397,22 @@ function injectBot(container) {
   };
 
   // Periodic Check (Heartbeat)
-   // Adjusted frequency: Check every 45s, 50% chance
-   setInterval(() => {
-     if (isQuietMode) return;
+  // Adjusted frequency: Check every 30s, 50% chance
+  if (heartbeatTimer) clearInterval(heartbeatTimer);
+  heartbeatTimer = setInterval(() => {
+    if (isQuietMode) return;
 
-     const now = Date.now();
-     const idleTime = now - lastInputTime;
-     
-     // Only pop if idle for > 10s
-     if (idleTime > 10000) {
-         // 50% chance to pop
-         if (Math.random() < 0.5) {
-             showRandomQuote();
-         }
-     }
-   }, 30 * 1000); // Check every 30 seconds for better engagement
+    const now = Date.now();
+    const idleTime = now - lastInputTime;
+    
+    // Only pop if idle for > 10s
+    if (idleTime > 10000) {
+        // 50% chance to pop
+        if (Math.random() < 0.5) {
+            showRandomQuote();
+        }
+    }
+  }, 30 * 1000); // Check every 30 seconds for better engagement
 
   // Update input time
   const updateActivity = () => {
